@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>11</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\shared\CSharp9Support\IsExternalInit.cs" Link="IsExternalInit.cs" />
+    <Compile Include="..\..\..\shared\CSharp9Support\NullableExtensions.cs" Link="NullableExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hector.Core\Hector.Core.csproj" />
+  </ItemGroup>
+
+</Project>
