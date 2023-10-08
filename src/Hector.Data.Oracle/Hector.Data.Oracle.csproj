@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.110" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hector.Core.DependencyInjection\Hector.Core.DependencyInjection.csproj" />
+    <ProjectReference Include="..\Hector.Data\Hector.Data.csproj" />
+  </ItemGroup>
+
+</Project>

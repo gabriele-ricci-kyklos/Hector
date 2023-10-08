@@ -14,5 +14,15 @@ namespace Hector.Core
             strCh.Shuffle();
             return new string(strCh);
         }
+
+        public static string? ToNullIfBlank(this string? s)
+        {
+            if (!s.IsNullOrBlankString())
+            {
+                return s;
+            }
+
+            return null;
+        }
     }
 }
