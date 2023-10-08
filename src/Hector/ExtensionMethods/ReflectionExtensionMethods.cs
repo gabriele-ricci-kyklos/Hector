@@ -119,5 +119,116 @@ namespace Hector.Core
             fieldInfo.SetValue(target, value);
             return true;
         }
+
+        public static bool IsSimpleType(this Type type)
+        {
+            if (!(type == typeof(string)) && !type.GetNonNullableType().IsPrimitive && !type.GetNonNullableType().IsNumericType() && !(type.GetNonNullableType() == typeof(DateTime)))
+            {
+                return type.IsEnum;
+            }
+
+            return true;
+        }
+
+        public static Type GetNonNullableType(this Type type)
+        {
+            if (type.IsNullableType())
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return type;
+        }
+
+        public static bool IsNullableType(this Type? type)
+        {
+            if (type is object && type!.IsGenericType)
+            {
+                return type!.GetGenericTypeDefinition() == typeof(Nullable<>);
+            }
+
+            return false;
+        }
+
+        public static bool IsNumericType(this Type? type)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            return ((uint)(typeCode - 4) <= 11u);
+        }
+
+        public static bool TypeIsTuple(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(Tuple<>)) && !genericTypeDefinition.Equals(typeof(Tuple<,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(Tuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].TypeIsTuple();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool TypeIsValueTuple(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(ValueTuple<>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].TypeIsValueTuple();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool TypeIsDictionary(this Type type)
+        {
+            return typeof(IDictionary<string, object>).IsAssignableFrom(type);
+        }
+
+        public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
+            type.GetAttributeOfType<TAttrib>() is not null;
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type)
+            where TAttrib : Attribute =>
+            type.GetAttributeOfType<TAttrib>(inherit: false);
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type, bool inherit)
+            where TAttrib : Attribute =>
+            type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().FirstOrDefault();
+
+        public static TAttrib GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit)
+            where TAttrib : Attribute => propertyInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
+
+        public static bool HasAttribute<TAttrib>(this PropertyInfo propertyInfo, bool inherit) where TAttrib : Attribute => propertyInfo.GetAttributeOfType<TAttrib>(inherit) is not null;
+
+        public static TAttrib GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit)
+            where TAttrib : Attribute =>
+            fieldInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
+
+        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type)
+            where TAttrib : Attribute =>
+            type.GetAllAttributesOfType<TAttrib>(inherit: false);
+
+        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type, bool inherit)
+            where TAttrib : Attribute =>
+            type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().ToArray();
     }
 }
