@@ -17,7 +17,7 @@ namespace Hector.Data.Queries
         internal QueryBuilder(IAsyncDaoHelper asyncDaoHelper)
         {
             _asyncDaoHelper = asyncDaoHelper;
-            _parameters= new();
+            _parameters = new();
         }
 
         public string Query => PrepareQuery();
