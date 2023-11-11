@@ -16,6 +16,7 @@
         string ReplaceFunction { get; }
         string IsNullFunction { get; }
         string DummyTableName { get; }
+        abstract string SequenceValue { get; }
 
         string EscapeFieldName(string fieldName);
     }

@@ -27,5 +27,7 @@
         public override string ReplaceFunction => "replace({0}, {1})";
 
         public override string IsNullFunction => "isnull({0}, {1})";
+
+        public override string SequenceValue => "(next value for {0})";
     }
 }

@@ -29,5 +29,7 @@
         public override string IsNullFunction => "nvl({0}, {1})";
 
         public override string DummyTableName => "dual";
+
+        public override string SequenceValue => "({0}.nextval)";
     }
 }
