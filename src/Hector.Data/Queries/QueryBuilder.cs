@@ -18,14 +18,16 @@ namespace Hector.Data.Queries
     public class QueryBuilder : IQueryBuilder
     {
         private readonly IAsyncDaoHelper _asyncDaoHelper;
+        private readonly string? _schema;
         private readonly List<SqlParameter> _parameters;
         private readonly Dictionary<string, string> _sqlFuncMapping;
 
         private string _rawQuery = string.Empty;
 
-        public QueryBuilder(IAsyncDaoHelper asyncDaoHelper)
+        public QueryBuilder(IAsyncDaoHelper asyncDaoHelper, string? schema)
         {
             _asyncDaoHelper = asyncDaoHelper;
+            _schema = schema;
             _parameters = new();
 
             _sqlFuncMapping =
@@ -63,8 +65,8 @@ namespace Hector.Data.Queries
         }
 
         private string ResolveQueryFunctions(string query) => ResolveStandardQueryPlaceholders(query, @"\$FN\{([^\}]*)\}", true, ResolveFunctionPlaceholder);
-        private string ResolveQueryTables(string query) => ResolveStandardQueryPlaceholders(query, @"\$T\{([0-9A-Z_\sa-z]+)\}", true, ResolveStandardPlaceholder);
-        private string ResolveQueryFields(string query) => ResolveStandardQueryPlaceholders(query, @"\$F\{([0-9A-Z_\sa-z]+)\}", true, ResolveStandardPlaceholder);
+        private string ResolveQueryTables(string query) => ResolveStandardQueryPlaceholders(query, @"\$T\{([0-9A-Z_\sa-z]+)\}", true, ResolveTablePlaceholder);
+        private string ResolveQueryFields(string query) => ResolveStandardQueryPlaceholders(query, @"\$F\{([0-9A-Z_\sa-z]+)\}", true, ResolveFieldPlaceholder);
         private string ResolveQuerySequences(string query) => ResolveStandardQueryPlaceholders(query, @"\$S\{([0-9A-Z_\sa-z]+)\}", true, ResolveSequencePlaceholder);
 
         private string ResolveStandardQueryPlaceholders(string query, string pattern, bool shouldEscapeName, Action<string, bool, StringBuilder> predicate)
@@ -96,7 +98,7 @@ namespace Hector.Data.Queries
             return output.ToString();
         }
 
-        private void ResolveStandardPlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
+        private void ResolveFieldPlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
         {
             if (shouldEscapeName)
             {
@@ -104,6 +106,19 @@ namespace Hector.Data.Queries
             }
 
             output
+                .Append(placeholderValue);
+        }
+
+        private void ResolveTablePlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
+        {
+            if (shouldEscapeName)
+            {
+                placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
+            }
+
+            output
+                .Append(_schema)
+                .Append('.')
                 .Append(placeholderValue);
         }
 
@@ -147,6 +162,8 @@ namespace Hector.Data.Queries
             {
                 placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
             }
+
+            placeholderValue = $"{_schema}.{placeholderValue}";
 
             string? funcStr = string.Format(_asyncDaoHelper.SequenceValue, placeholderValue);
 

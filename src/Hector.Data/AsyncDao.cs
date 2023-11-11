@@ -45,7 +45,7 @@ namespace Hector.Data
 
         protected abstract DbConnection GetDbConnection();
 
-        public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper).SetQuery(query);
+        public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper, Schema).SetQuery(query);
 
         public async Task<T> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
         {
