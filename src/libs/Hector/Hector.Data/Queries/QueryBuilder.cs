@@ -9,17 +9,21 @@ namespace Hector.Data.Queries
 {
     public interface IQueryBuilder
     {
-        public string Query { get; }
-        public SqlParameter[] Parameters { get; }
+        string Query { get; }
+        SqlParameter[] Parameters { get; }
 
-        public IQueryBuilder SetQuery(string query);
+        IQueryBuilder SetQuery(string query);
+        IQueryBuilder AddParam(SqlParameter param);
+        IQueryBuilder AddParam(Type type, string name, object value);
+        IQueryBuilder AddParam<T>(string name, T value) where T : notnull;
+        string GetQueryWithReplacedParameters();
     }
 
     public class QueryBuilder : IQueryBuilder
     {
         private readonly IAsyncDaoHelper _asyncDaoHelper;
         private readonly string? _schema;
-        private readonly List<SqlParameter> _parameters;
+        private readonly Dictionary<string, SqlParameter> _parameters;
         private readonly Dictionary<string, string> _sqlFuncMapping;
 
         private string _rawQuery = string.Empty;
@@ -47,12 +51,29 @@ namespace Hector.Data.Queries
 
         public string Query => PrepareQuery(_rawQuery);
 
-        public SqlParameter[] Parameters => _parameters.ToArray();
+        public SqlParameter[] Parameters => _parameters.Values.ToArray();
 
         public IQueryBuilder SetQuery(string query)
         {
             _rawQuery = query;
             return this;
+        }
+
+        public IQueryBuilder AddParam(SqlParameter param)
+        {
+            _parameters.Add(param.Name, param);
+            return this;
+        }
+
+        public IQueryBuilder AddParam(Type type, string name, object value) => AddParam(new(type, name, value));
+
+        public IQueryBuilder AddParam<T>(string name, T value) where T : notnull => AddParam(new(typeof(T), name, value));
+
+        public string GetQueryWithReplacedParameters()
+        {
+            string query = PrepareQuery(_rawQuery);
+            query = ResolveQueryParameterValues(query);
+            return query;
         }
 
         private string PrepareQuery(string query)
@@ -62,6 +83,7 @@ namespace Hector.Data.Queries
             workedQuery = ResolveQueryFunctions(workedQuery);
             workedQuery = ResolveQuerySequences(workedQuery);
             workedQuery = ResolveQueryStoredProcedures(workedQuery);
+            workedQuery = ResolveQueryParameters(workedQuery);
             return workedQuery;
         }
 
@@ -70,6 +92,8 @@ namespace Hector.Data.Queries
         private string ResolveQueryFields(string query) => ResolveStandardQueryPlaceholders(query, @"\$F\{([0-9A-Z_\sa-z]+)\}", true, ResolveFieldPlaceholder);
         private string ResolveQuerySequences(string query) => ResolveStandardQueryPlaceholders(query, @"\$S\{([0-9A-Z_\sa-z]+)\}", true, ResolveSequencePlaceholder);
         private string ResolveQueryStoredProcedures(string query) => ResolveStandardQueryPlaceholders(query, @"\$SP\{([0-9A-Z_\sa-z]+)\}", true, ResolveTablePlaceholder);
+        private string ResolveQueryParameters(string query) => ResolveStandardQueryPlaceholders(query, @"\$P\{([0-9A-Z_\sa-z]+)\}", true, ResolveParameterPlaceholder);
+        private string ResolveQueryParameterValues(string query) => ResolveStandardQueryPlaceholders(query, @$"\{_asyncDaoHelper.ParameterPrefix}([0-9A-Z_\sa-z]+)", true, ResolveParameterValuePlaceholder);
 
         private string ResolveStandardQueryPlaceholders(string query, string pattern, bool shouldEscapeName, Action<string, bool, StringBuilder> predicate)
         {
@@ -171,6 +195,29 @@ namespace Hector.Data.Queries
 
             output
                 .Append(funcStr);
+        }
+
+        private void ResolveParameterPlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
+        {
+            if (!_parameters.ContainsKey(placeholderValue.Trim()))
+            {
+                throw new NotSupportedException($"No sql parameters proveded for param {placeholderValue}");
+            }
+
+            output
+                .Append(_asyncDaoHelper.ParameterPrefix)
+                .Append(placeholderValue);
+        }
+
+        private void ResolveParameterValuePlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
+        {
+            if (!_parameters.ContainsKey(placeholderValue.Trim()))
+            {
+                throw new NotSupportedException($"No sql parameters proveded for param {placeholderValue}");
+            }
+
+            output
+                .Append(_parameters[placeholderValue].Value);
         }
     }
 }
