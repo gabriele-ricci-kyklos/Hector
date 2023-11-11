@@ -58,6 +58,7 @@ namespace Hector.Data.Queries
             string workedQuery = ResolveQueryFields(query);
             workedQuery = ResolveQueryTables(workedQuery);
             workedQuery = ResolveQueryFunctions(workedQuery);
+            workedQuery = ResolveQuerySequences(workedQuery);
             return workedQuery;
         }
 
@@ -89,7 +90,7 @@ namespace Hector.Data.Queries
 
             if (cursor < query.Length)
             {
-                output.Append(query[cursor..].Trim());
+                output.Append(query[cursor..]);
             }
 
             return output.ToString();
@@ -103,8 +104,7 @@ namespace Hector.Data.Queries
             }
 
             output
-                .Append(placeholderValue)
-                .Append(" ");
+                .Append(placeholderValue);
         }
 
         private void ResolveFunctionPlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
@@ -132,13 +132,12 @@ namespace Hector.Data.Queries
                     .Append(funcStr)
                     .Append("(")
                     .Append(funcArgs.StringJoin(", "))
-                    .Append(") ");
+                    .Append(")");
             }
             else
             {
                 output
-                    .Append(string.Format(funcStr, funcArgs))
-                    .Append(" ");
+                    .Append(string.Format(funcStr, funcArgs));
             }
         }
 
@@ -152,8 +151,7 @@ namespace Hector.Data.Queries
             string? funcStr = string.Format(_asyncDaoHelper.SequenceValue, placeholderValue);
 
             output
-                .Append(funcStr)
-                .Append(" ");
+                .Append(funcStr);
         }
     }
 }
