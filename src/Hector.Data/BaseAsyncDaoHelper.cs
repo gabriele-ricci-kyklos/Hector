@@ -28,6 +28,8 @@
 
         public abstract string IsNullFunction { get; }
 
+        public abstract string SequenceValue { get; }
+
         public virtual string DummyTableName => string.Empty;
 
         public string EscapeFieldName(string? fieldName)

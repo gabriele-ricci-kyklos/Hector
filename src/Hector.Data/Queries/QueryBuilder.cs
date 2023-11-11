@@ -64,6 +64,7 @@ namespace Hector.Data.Queries
         private string ResolveQueryFunctions(string query) => ResolveStandardQueryPlaceholders(query, @"\$FN\{([^\}]*)\}", true, ResolveFunctionPlaceholder);
         private string ResolveQueryTables(string query) => ResolveStandardQueryPlaceholders(query, @"\$T\{([0-9A-Z_\sa-z]+)\}", true, ResolveStandardPlaceholder);
         private string ResolveQueryFields(string query) => ResolveStandardQueryPlaceholders(query, @"\$F\{([0-9A-Z_\sa-z]+)\}", true, ResolveStandardPlaceholder);
+        private string ResolveQuerySequences(string query) => ResolveStandardQueryPlaceholders(query, @"\$S\{([0-9A-Z_\sa-z]+)\}", true, ResolveSequencePlaceholder);
 
         private string ResolveStandardQueryPlaceholders(string query, string pattern, bool shouldEscapeName, Action<string, bool, StringBuilder> predicate)
         {
@@ -139,6 +140,20 @@ namespace Hector.Data.Queries
                     .Append(string.Format(funcStr, funcArgs))
                     .Append(" ");
             }
+        }
+
+        private void ResolveSequencePlaceholder(string placeholderValue, bool shouldEscapeName, StringBuilder output)
+        {
+            if (shouldEscapeName)
+            {
+                placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
+            }
+
+            string? funcStr = string.Format(_asyncDaoHelper.SequenceValue, placeholderValue);
+
+            output
+                .Append(funcStr)
+                .Append(" ");
         }
     }
 }
