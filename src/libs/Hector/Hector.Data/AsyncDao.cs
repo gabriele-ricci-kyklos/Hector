@@ -21,7 +21,7 @@ namespace Hector.Data
 
         string Schema { get; }
 
-        IQueryBuilder NewQueryBuilder();
+        IQueryBuilder NewQueryBuilder(string query = "");
 
         Task<T> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
         Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
@@ -45,7 +45,7 @@ namespace Hector.Data
 
         protected abstract DbConnection GetDbConnection();
 
-        public IQueryBuilder NewQueryBuilder() => new QueryBuilder(_daoHelper);
+        public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper).SetQuery(query);
 
         public async Task<T> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
         {

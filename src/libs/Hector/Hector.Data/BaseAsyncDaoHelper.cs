@@ -1,12 +1,4 @@
-﻿using Hector.Core;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-
-namespace Hector.Data
+﻿namespace Hector.Data
 {
     public abstract class BaseAsyncDaoHelper : IAsyncDaoHelper
     {
