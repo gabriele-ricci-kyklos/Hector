@@ -61,6 +61,7 @@ namespace Hector.Data.Queries
             workedQuery = ResolveQueryTables(workedQuery);
             workedQuery = ResolveQueryFunctions(workedQuery);
             workedQuery = ResolveQuerySequences(workedQuery);
+            workedQuery = ResolveQueryStoredProcedures(workedQuery);
             return workedQuery;
         }
 
@@ -68,6 +69,7 @@ namespace Hector.Data.Queries
         private string ResolveQueryTables(string query) => ResolveStandardQueryPlaceholders(query, @"\$T\{([0-9A-Z_\sa-z]+)\}", true, ResolveTablePlaceholder);
         private string ResolveQueryFields(string query) => ResolveStandardQueryPlaceholders(query, @"\$F\{([0-9A-Z_\sa-z]+)\}", true, ResolveFieldPlaceholder);
         private string ResolveQuerySequences(string query) => ResolveStandardQueryPlaceholders(query, @"\$S\{([0-9A-Z_\sa-z]+)\}", true, ResolveSequencePlaceholder);
+        private string ResolveQueryStoredProcedures(string query) => ResolveStandardQueryPlaceholders(query, @"\$SP\{([0-9A-Z_\sa-z]+)\}", true, ResolveTablePlaceholder);
 
         private string ResolveStandardQueryPlaceholders(string query, string pattern, bool shouldEscapeName, Action<string, bool, StringBuilder> predicate)
         {
