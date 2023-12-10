@@ -17,7 +17,7 @@ namespace Hector.Core
 
         public static string? ToNullIfBlank(this string? s)
         {
-            if (!s.IsNullOrBlankString())
+            if (s.IsNotNullAndNotBlank())
             {
                 return s;
             }

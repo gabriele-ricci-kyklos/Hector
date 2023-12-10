@@ -125,7 +125,10 @@ namespace Hector.Core
 
         public static object ToEntity(this DataRow tableRow, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
         {
-            object returnObj = Activator.CreateInstance(type);
+            object returnObj =
+                Activator
+                    .CreateInstance(type)
+                    .GetNonNullOrThrow(nameof(returnObj));
 
             PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);

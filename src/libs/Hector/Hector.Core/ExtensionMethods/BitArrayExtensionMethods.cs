@@ -42,7 +42,13 @@ namespace Hector.Core
         //credits: https://stackoverflow.com/a/37072636/4499267
         public static int IndexOfMaxSignificantBit(this BitArray array)
         {
-            int[] intArray = (int[])array.GetType().GetField("m_array", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(array);
+            object? objValue =
+                array
+                    .GetType()
+                    .GetField("m_array", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.GetValue(array);
+
+            int[] intArray = (int[])(objValue.GetNonNullOrThrow(nameof(objValue)));
             int pos = -1;
             int maxPos = -1;
 

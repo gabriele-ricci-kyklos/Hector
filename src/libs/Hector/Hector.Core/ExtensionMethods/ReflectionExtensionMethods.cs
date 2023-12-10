@@ -20,7 +20,7 @@ namespace Hector.Core
             }
         }
 
-        public static IEnumerable<(string Name, Lazy<object> Value)> GetLazyPropertyValues(this object item, string[]? propertiesToExclude = null)
+        public static IEnumerable<(string Name, Lazy<object?> Value)> GetLazyPropertyValues(this object item, string[]? propertiesToExclude = null)
         {
             foreach (PropertyInfo property in item.GetType().GetPropertiesForType(propertiesToExclude))
             {
@@ -92,12 +92,12 @@ namespace Hector.Core
 
         public static bool SetPropertyValue(this object target, string propertyName, object value)
         {
-            if (target == null)
+            if (target is null)
             {
                 return false;
             }
-            PropertyInfo propInfo = target.GetType().GetProperty(propertyName);
-            if (propInfo == null)
+            PropertyInfo? propInfo = target.GetType().GetProperty(propertyName);
+            if (propInfo is null)
             {
                 return false;
             }
@@ -107,12 +107,12 @@ namespace Hector.Core
 
         public static bool SetFieldValue(this object target, string propertyName, object value)
         {
-            if (target == null)
+            if (target is null)
             {
                 return false;
             }
-            FieldInfo fieldInfo = target.GetType().GetField(propertyName);
-            if (fieldInfo == null)
+            FieldInfo? fieldInfo = target.GetType().GetField(propertyName);
+            if (fieldInfo is null)
             {
                 return false;
             }
@@ -214,14 +214,19 @@ namespace Hector.Core
             where TAttrib : Attribute =>
             type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().FirstOrDefault();
 
-        public static TAttrib GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit)
-            where TAttrib : Attribute => propertyInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
+        public static TAttrib? GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit)
+            where TAttrib : Attribute =>
+            GetAttributeOfTypeImpl<TAttrib>(propertyInfo, inherit);
 
         public static bool HasAttribute<TAttrib>(this PropertyInfo propertyInfo, bool inherit) where TAttrib : Attribute => propertyInfo.GetAttributeOfType<TAttrib>(inherit) is not null;
 
-        public static TAttrib GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit)
+        public static TAttrib? GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit)
             where TAttrib : Attribute =>
-            fieldInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
+            GetAttributeOfTypeImpl<TAttrib>(fieldInfo, inherit);
+
+        private static TAttrib? GetAttributeOfTypeImpl<TAttrib>(this MemberInfo memberInfo, bool inherit)
+            where TAttrib : Attribute =>
+            memberInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
 
         public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type)
             where TAttrib : Attribute =>

@@ -58,7 +58,7 @@ namespace Hector.Core
             }
 
 
-            string pathRoot = Path.GetPathRoot(path);
+            string pathRoot = Path.GetPathRoot(path) ?? string.Empty;
             if (pathRoot.Length <= 2 && pathRoot != "/") // Accepts X:\ and \\UNC\PATH, rejects empty string, \ and X:, but accepts / to support Linux
             {
                 return false;
@@ -69,7 +69,7 @@ namespace Hector.Core
                 return true; // Rooted and not a UNC path
             }
 
-            return pathRoot.Trim('\\').IndexOf('\\') != -1; // A UNC server name without a share name (e.g "\\NAME" or "\\NAME\") is invalid
+            return pathRoot.Trim('\\').Contains('\\'); // A UNC server name without a share name (e.g "\\NAME" or "\\NAME\") is invalid
         }
     }
 }
