@@ -92,5 +92,26 @@ namespace Hector.Core
                 (list[n], list[k]) = (list[k], list[n]);
             }
         }
+
+        public static IEnumerable<T[]> Split<T>(this IEnumerable<T> list, int chunkSize)
+        {
+            if (chunkSize <= 0)
+            {
+                throw new FormatException("The size cannot be <= 0");
+            }
+
+            int count = list.Count();
+            for (int i = 0; i < count; i += chunkSize)
+            {
+                yield return list.GetRange(i, Math.Min(chunkSize, count - i));
+            }
+        }
+
+        public static T[] GetRange<T>(this IEnumerable<T> data, int index, int length)
+        {
+            T[] result = new T[length];
+            Array.Copy(data.ToArray(), index, result, 0, length);
+            return result;
+        }
     }
 }
