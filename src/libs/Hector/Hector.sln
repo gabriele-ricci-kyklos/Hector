@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Core.DependencyInjec
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Data.Oracle", "Hector.Data.Oracle\Hector.Data.Oracle.csproj", "{8AE69891-157F-4FA9-8F12-1BB31A37B77A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.PDF", "Hector.Core.PDF\Hector.Core.PDF.csproj", "{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Core.PDF", "Hector.Core.PDF\Hector.Core.PDF.csproj", "{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.Reflection", "Hector.Core.Reflection\Hector.Core.Reflection.csproj", "{7E4BC71F-582D-416F-92FC-6330FEEA7025}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
