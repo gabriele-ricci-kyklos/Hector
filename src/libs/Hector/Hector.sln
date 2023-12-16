@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Core.PDF", "Hector.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.Reflection", "Hector.Core.Reflection\Hector.Core.Reflection.csproj", "{7E4BC71F-582D-416F-92FC-6330FEEA7025}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.Mail", "Hector.Core.Mail\Hector.Core.Mail.csproj", "{1F7BE42B-CB62-4C9F-B44B-DD1D0EEA91E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E4BC71F-582D-416F-92FC-6330FEEA7025}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F7BE42B-CB62-4C9F-B44B-DD1D0EEA91E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F7BE42B-CB62-4C9F-B44B-DD1D0EEA91E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F7BE42B-CB62-4C9F-B44B-DD1D0EEA91E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F7BE42B-CB62-4C9F-B44B-DD1D0EEA91E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
