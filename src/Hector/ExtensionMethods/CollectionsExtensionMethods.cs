@@ -19,7 +19,13 @@ namespace Hector.Core
             enumerable.ToEmptyIfNull().ToList();
 
         public static T[] ToEmptyArrayIfNull<T>(this IEnumerable<T>? enumerable) =>
-            enumerable?.ToArray() ?? Array.Empty<T>();
+            enumerable?.ToArray() ?? [];
+
+        public static T[]? ToNullIfEmptyArray<T>(this IEnumerable<T>? list) =>
+            list.IsNullOrEmptyList() ? null : list.ToEmptyArrayIfNull();
+
+        public static List<T>? ToNullIfEmptyList<T>(this IEnumerable<T>? list) =>
+            list.IsNullOrEmptyList() ? null : list.ToEmptyListIfNull();
 
         public static void ForEach<T>(this IEnumerable<T> sequence, Action<T> action)
         {
