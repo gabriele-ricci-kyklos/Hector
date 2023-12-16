@@ -14,12 +14,10 @@ namespace Hector.Core.Reflection
             {
                 typesHierarchyList.Add(loopType);
 
-                string[]? baseTypeProperties =
+                Member[]? baseTypeProperties =
                     type
                         .BaseType
-                        ?.GetUnorderedPropertyList()
-                        ?.Select(x => x.Name)
-                        ?.ToArray();
+                        ?.GetUnorderedPropertyList();
 
                 if (baseTypeProperties is null)
                 {
