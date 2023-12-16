@@ -5,13 +5,15 @@ VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Core", "Hector.Core\Hector.Core.csproj", "{5D0AF362-6CCC-440B-B2DA-0DC9268DD0F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Data", "Hector.Data\Hector.Data.csproj", "{DF55CF1C-493A-42F0-B0A1-B00B0C0EC8C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Data", "Hector.Data\Hector.Data.csproj", "{DF55CF1C-493A-42F0-B0A1-B00B0C0EC8C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Data.SqlServer", "Hector.Data.SqlServer\Hector.Data.SqlServer.csproj", "{5D18E693-567D-4B73-AF8A-47ABDF4BDCFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Data.SqlServer", "Hector.Data.SqlServer\Hector.Data.SqlServer.csproj", "{5D18E693-567D-4B73-AF8A-47ABDF4BDCFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.DependencyInjection", "Hector.Core.DependencyInjection\Hector.Core.DependencyInjection.csproj", "{11CFA8E9-2730-4BC9-B20F-A9C47F53224E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Core.DependencyInjection", "Hector.Core.DependencyInjection\Hector.Core.DependencyInjection.csproj", "{11CFA8E9-2730-4BC9-B20F-A9C47F53224E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Data.Oracle", "Hector.Data.Oracle\Hector.Data.Oracle.csproj", "{8AE69891-157F-4FA9-8F12-1BB31A37B77A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hector.Data.Oracle", "Hector.Data.Oracle\Hector.Data.Oracle.csproj", "{8AE69891-157F-4FA9-8F12-1BB31A37B77A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Core.PDF", "Hector.Core.PDF\Hector.Core.PDF.csproj", "{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{8AE69891-157F-4FA9-8F12-1BB31A37B77A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AE69891-157F-4FA9-8F12-1BB31A37B77A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AE69891-157F-4FA9-8F12-1BB31A37B77A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D47A0B5-821F-4F50-A98C-7FD12922D4F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
