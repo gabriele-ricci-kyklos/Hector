@@ -70,7 +70,9 @@ namespace Hector.Core
         public static bool IsIn<T>(this T item, IEnumerable<T> list, Func<T, T, bool> eqFx) =>
             list.ToEmptyIfNull().Any(x => eqFx(item, x));
 
-        public static List<T> AsList<T>(this T s) => new() { s };
+        public static List<T> AsList<T>(this T s) => [s];
+
+        public static T[] AsArray<T>(this T s) => [s];
 
         public static T[] AsArray<T>(this T item, int size = 1, bool setValueInAll = false)
         {
@@ -83,17 +85,16 @@ namespace Hector.Core
             return array;
         }
 
-        public static T[]? AsArrayOrNull<T>(this T item, int size = 1, bool setValueInAll = false) =>
-            item?.AsArray(size, setValueInAll);
+        public static T[]? AsArrayOrNull<T>(this T item) => item?.AsArray();
 
         public static List<T>? AsListOrNull<T>(this T item) => item?.AsList();
 
         //credits: https://stackoverflow.com/a/24648788/4499267
-        public static void Shuffle<T>(this IList<T> list, Random? random = null)
+        public static void Shuffle<T>(this T[] list, Random? random = null)
         {
             Random rng = random ?? new Random();
 
-            int n = list.Count;
+            int n = list.Length;
             while (n > 1)
             {
                 n--;
@@ -109,17 +110,18 @@ namespace Hector.Core
                 throw new FormatException("The size cannot be <= 0");
             }
 
-            int count = list.Count();
+            T[] fullList = list.ToArray();
+            int count = fullList.Length;
             for (int i = 0; i < count; i += chunkSize)
             {
-                yield return list.GetRange(i, Math.Min(chunkSize, count - i));
+                yield return fullList.GetRange(i, Math.Min(chunkSize, count - i));
             }
         }
 
-        public static T[] GetRange<T>(this IEnumerable<T> data, int index, int length)
+        public static T[] GetRange<T>(this T[] data, int index, int length)
         {
             T[] result = new T[length];
-            Array.Copy(data.ToArray(), index, result, 0, length);
+            Array.Copy(data, index, result, 0, length);
             return result;
         }
     }
