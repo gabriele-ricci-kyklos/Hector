@@ -1,4 +1,6 @@
-﻿using Hector.Core;
+﻿using FluentAssertions;
+using Hector.Core;
+using System;
 
 namespace Hector.Tests.Core.ExtensionMethods
 {
@@ -9,15 +11,17 @@ namespace Hector.Tests.Core.ExtensionMethods
         [InlineData("abc")]
         public void TestGetNonNullOrThrow(string? testValue)
         {
-            if(testValue is null)
+            Func<string?, string> func = x => x.GetNonNullOrThrow(nameof(x));
+
+            if (testValue is null)
             {
-                var ex = Assert.Throws<ArgumentNullException>(() => testValue.GetNonNullOrThrow(nameof(testValue)));
-                Assert.IsType<ArgumentNullException>(ex);
+                func
+                    .Invoking(f => f(testValue))
+                    .Should().Throw<ArgumentNullException>();
             }    
             else
             {
-                string newValue = testValue.GetNonNullOrThrow(nameof(newValue));
-                Assert.Equal(testValue, newValue);
+                func(testValue).Should().Be(testValue);
             }
         }
 
@@ -26,15 +30,19 @@ namespace Hector.Tests.Core.ExtensionMethods
         [InlineData("abc")]
         public void TestGetNonNullOrThrowWithExFactory(string? testValue)
         {
+            Func<string?, string> func = x => x.GetNonNullOrThrow(() => throw new NotSupportedException("custom msg"));
+
             if (testValue is null)
             {
-                var ex = Assert.Throws<NotSupportedException>(() => testValue.GetNonNullOrThrow(() => throw new NotSupportedException("custom msg")));
-                Assert.IsType<NotSupportedException>(ex);
+                func
+                    .Invoking(f => f(testValue))
+                    .Should().Throw<NotSupportedException>();
             }
             else
             {
-                string newValue = testValue.GetNonNullOrThrow(() => throw new NotSupportedException("custom msg"));
-                Assert.Equal(testValue, newValue);
+                testValue
+                    .GetNonNullOrThrow(() => throw new NotSupportedException("custom msg"))
+                    .Should().Be(testValue);
             }
         }
 
@@ -47,12 +55,13 @@ namespace Hector.Tests.Core.ExtensionMethods
             if (func(testValue))
             {
                 int newValue = testValue.GetValidatedOrThrow(func, nameof(newValue));
-                Assert.Equal(newValue, testValue);
+                newValue.Should().Be(testValue);
             }
             else
             {
-                var ex = Assert.Throws<ArgumentException>(() => testValue.GetValidatedOrThrow(func, nameof(testValue)));
-                Assert.IsType<ArgumentException>(ex);
+                testValue
+                    .Invoking(x => x.GetValidatedOrThrow(func, nameof(x)))
+                    .Should().Throw<ArgumentException>();
             }
         }
 
@@ -61,15 +70,16 @@ namespace Hector.Tests.Core.ExtensionMethods
         [InlineData("abc")]
         public void TestGetTextOrThrow(string? testValue)
         {
-            if(testValue is null)
+            Func<string?, string> func = x => x.GetTextOrThrow(nameof(x));
+
+            if (testValue is null)
             {
-                var ex = Assert.Throws<ArgumentException>(() => testValue.GetTextOrThrow(nameof(testValue)));
-                Assert.IsType<ArgumentException>(ex);
+                func.Invoking(f => f(testValue)).Should().Throw<ArgumentException>();
             }
             else
             {
-                string newValue = testValue.GetTextOrThrow(nameof(testValue));
-                Assert.Equal(newValue, testValue);
+                string newValue = func(testValue);
+                newValue.Should().Be(testValue);
             }
         }
     }
