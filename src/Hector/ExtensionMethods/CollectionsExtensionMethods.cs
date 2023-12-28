@@ -15,6 +15,9 @@ namespace Hector.Core
         public static IEnumerable<T> ToEmptyIfNull<T>(this IEnumerable<T>? enumerable) =>
             enumerable ?? Enumerable.Empty<T>();
 
+        public static IEnumerable<T>? ToNullIfEmpty<T>(this IEnumerable<T>? list) =>
+            list.IsNullOrEmptyList() ? null : list.ToEmptyIfNull();
+
         public static List<T> ToEmptyListIfNull<T>(this IEnumerable<T>? enumerable) =>
             enumerable.ToEmptyIfNull().ToList();
 
