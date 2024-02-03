@@ -8,120 +8,58 @@ namespace Hector.Core
 {
     public static class DataExtensionMethods
     {
-        // ToEntityList DataRow[]
+        // ToEntityList IEnumerable<DataRow>
 
-        public static IEnumerable<T> ToEntityList<T>(this DataRow[] rows, bool throwIfPropertyNotFound = false) where T : new()
-        {
-            return ToEntityList<T>(rows, throwIfPropertyNotFound, StringComparison.InvariantCultureIgnoreCase, null, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound = false)
+            where T : new() =>
+            ToEntityList<T>(rows, throwIfPropertyNotFound, StringComparison.OrdinalIgnoreCase);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataRow[] rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison) where T : new()
-        {
-            return ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, null, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison)
+            where T : new() =>
+            ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, null, null);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataRow[] rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap) where T : new()
-        {
-            return ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap)
+            where T : new() =>
+            ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataRow[] rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap) where T : new()
-        {
-            return ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap)
+            where T : new() =>
+            ToEntityList<T>(rows, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataRow[] rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap) where T : new()
-        {
-            return
-                ToEntityList(rows, typeof(T), throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap)
-                .Cast<T>();
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataRow[] rows, Type type, bool throwIfPropertyNotFound = false)
-        {
-            return ToEntityList(rows, type, throwIfPropertyNotFound, StringComparison.InvariantCultureIgnoreCase, null, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataRow[] rows, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison)
-        {
-            return ToEntityList(rows, type, throwIfPropertyNotFound, propertyNameComparison, null, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataRow[] rows, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap)
-        {
-            return ToEntityList(rows, type, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataRow[] rows, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap)
-        {
-            return ToEntityList(rows, type, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataRow[] rows, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
+            where T : new()
         {
             foreach (DataRow dr in rows)
             {
-                object newRow = ToEntity(dr, type, throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap);
-                yield return newRow;
+                object newRow = ToEntity(dr, typeof(T), throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap);
+                yield return (T)newRow;
             }
         }
 
         // ToEntityList DataTable
 
-        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound = false) where T : new()
-        {
-            return ToEntityList<T>(table, throwIfPropertyNotFound, StringComparison.InvariantCultureIgnoreCase, null, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound = false)
+            where T : new() =>
+            ToEntityList<T>(table, throwIfPropertyNotFound, StringComparison.InvariantCultureIgnoreCase);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison) where T : new()
-        {
-            return ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, null, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison)
+            where T : new() =>
+            ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, null, null);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap) where T : new()
-        {
-            return ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap)
+            where T : new() =>
+            ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap) where T : new()
-        {
-            return ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
-        }
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap)
+            where T : new() =>
+            ToEntityList<T>(table, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
 
-        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap) where T : new()
-        {
-            return
-                ToEntityList(table, typeof(T), throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap)
-                    .Cast<T>();
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataTable table, Type type, bool throwIfPropertyNotFound = false)
-        {
-            return ToEntityList(table, type, throwIfPropertyNotFound, StringComparison.InvariantCultureIgnoreCase, null, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataTable table, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison)
-        {
-            return ToEntityList(table, type, throwIfPropertyNotFound, propertyNameComparison, null, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataTable table, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap)
-        {
-            return ToEntityList(table, type, throwIfPropertyNotFound, propertyNameComparison, typesMap, null);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataTable table, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<string, string>? propertyNamesMap)
-        {
-            return ToEntityList(table, type, throwIfPropertyNotFound, propertyNameComparison, null, propertyNamesMap);
-        }
-
-        public static IEnumerable<object> ToEntityList(this DataTable table, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
-        {
-            foreach (DataRow row in table.Rows)
-            {
-                yield return ToEntity(row, type, throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap);
-            }
-        }
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
+            where T : new() =>
+            table
+                .Rows
+                .Cast<DataRow>()
+                .ToEntityList<T>(throwIfPropertyNotFound, propertyNameComparison, typesMap, propertyNamesMap);
 
         public static object ToEntity(this DataRow tableRow, Type type, bool throwIfPropertyNotFound, StringComparison propertyNameComparison, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
         {
