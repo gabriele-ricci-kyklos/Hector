@@ -1,4 +1,5 @@
 ﻿using Hector.Core;
+using Hector.Core.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -45,7 +46,7 @@ namespace Hector.Data.Dynamic
                     _mappers[i] = new DataReaderToSingleValueMapper(fieldPosition, type);
                     ++fieldPosition;
                 }
-                else if (type.TypeIsValueTuple() || type.TypeIsTuple() || type.TypeIsDictionary())
+                else if (type.IsTypeValueTuple() || type.IsTypeTuple() || type.IsTypeDictionary())
                 {
                     throw new NotSupportedException($"{type.FullName} cannot be nested inside a tuple");
                 }
