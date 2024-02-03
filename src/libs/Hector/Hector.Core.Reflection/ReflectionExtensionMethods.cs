@@ -27,17 +27,6 @@ namespace Hector.Core.Reflection
             do
             {
                 typesHierarchyList.Add(loopType);
-
-                Member[]? baseTypeProperties =
-                    type
-                        .BaseType
-                        ?.GetUnorderedPropertyList();
-
-                if (baseTypeProperties is null)
-                {
-                    break;
-                }
-
                 loopType = loopType.BaseType;
             }
             while (loopType is not null && loopType != typeof(object));
@@ -231,11 +220,6 @@ namespace Hector.Core.Reflection
             return true;
         }
 
-        public static bool IsTypeDictionary(this Type type)
-        {
-            return typeof(IDictionary<string, object>).IsAssignableFrom(type);
-        }
-
         public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
             type.GetAttributeOfType<TAttrib>() is not null;
 
@@ -278,8 +262,6 @@ namespace Hector.Core.Reflection
                 yield return newRow;
             }
         }
-
-        // ToEntityList DataTable
 
         public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound = false, IEqualityComparer<string>? propertyNameComparer = null, Dictionary<Type, Func<object, object>>? typesMap = null, Dictionary<string, string>? propertyNamesMap = null)
             where T : new() =>
