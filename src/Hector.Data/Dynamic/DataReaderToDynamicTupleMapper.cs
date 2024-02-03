@@ -46,7 +46,7 @@ namespace Hector.Data.Dynamic
                     _mappers[i] = new DataReaderToSingleValueMapper(fieldPosition, type);
                     ++fieldPosition;
                 }
-                else if (type.IsTypeValueTuple() || type.IsTypeTuple() || type.IsTypeDictionary())
+                else if (type.IsTypeValueTuple() || type.IsTypeTuple() || IsTypeDictionary(type))
                 {
                     throw new NotSupportedException($"{type.FullName} cannot be nested inside a tuple");
                 }
@@ -63,6 +63,11 @@ namespace Hector.Data.Dynamic
                     _mappers[i] = mapper;
                 }
             }
+        }
+
+        private static bool IsTypeDictionary(Type type)
+        {
+            return typeof(IDictionary<string, object>).IsAssignableFrom(type);
         }
     }
 
