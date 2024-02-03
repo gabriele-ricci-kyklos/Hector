@@ -328,5 +328,46 @@ namespace Hector.Core.Reflection
 
             return returnObj;
         }
+
+        public static void CopyPropertyValues(this object? src, object? dst, TypeAccessor? srcTypeAccessor = null, TypeAccessor? dstTypeAccessor = null, string[]? propertiesToExclude = null)
+        {
+            if (src is null || dst is null)
+            {
+                return;
+            }
+
+            TypeAccessor srcAcc = srcTypeAccessor ?? TypeAccessor.Create(src.GetType());
+            TypeAccessor dstAcc = dstTypeAccessor ?? TypeAccessor.Create(dst.GetType());
+
+            Dictionary<string, Member> dstPropsDict =
+                dstAcc
+                    .GetUnorderedPropertyList(propertiesToExclude)
+                    .ToDictionary(x => x.Name, StringComparer.InvariantCultureIgnoreCase);
+
+            Member[] props = srcAcc.GetUnorderedPropertyList(propertiesToExclude);
+            foreach (Member p in props)
+            {
+                Member? dstProp = dstPropsDict.GetValueOrDefault(p.Name);
+
+                if (!p.CanWrite() || !p.CanRead() || dstProp is null)
+                {
+                    continue;
+                }
+
+                object? value = srcAcc[src, p.Name];
+
+                if (dstProp.Type == typeof(string) && value is not null)
+                {
+                    value = value.ToString();
+                }
+
+                if (p.Type == typeof(string))
+                {
+                    value = value?.ConvertTo(dstProp.Type);
+                }
+
+                dstAcc[dst, p.Name] = value ?? p.Type.GetDefaultValue();
+            }
+        }
     }
 }
