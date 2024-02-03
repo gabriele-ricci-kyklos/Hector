@@ -1,10 +1,24 @@
 ﻿using FastMember;
+using System.Data;
 using System.Reflection;
 
 namespace Hector.Core.Reflection
 {
     public static class ReflectionExtensionMethods
     {
+        public static IEnumerable<PropertyInfo> GetPropertiesForType(this Type type, params string[]? propertiesToExclude)
+        {
+            HashSet<string> propsToExclude = new(propertiesToExclude.ToEmptyArrayIfNull());
+            PropertyInfo[] properties = type.GetProperties();
+            foreach (PropertyInfo propertyInfo in properties)
+            {
+                if (!propsToExclude.Contains(propertyInfo.Name))
+                {
+                    yield return propertyInfo;
+                }
+            }
+        }
+
         public static Type[] GetTypeHierarchy(this Type type)
         {
             List<Type> typesHierarchyList = [];
@@ -32,6 +46,12 @@ namespace Hector.Core.Reflection
 
             return typesHierarchyList.ToArray();
         }
+
+        public static Member[] GetUnorderedPropertyList<T>(this T obj, string[]? propertiesToExclude = null)
+            where T : notnull =>
+            TypeAccessor
+                .Create(obj.GetType())
+                .GetUnorderedPropertyList(propertiesToExclude);
 
         public static Member[] GetUnorderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
             TypeAccessor
@@ -125,6 +145,188 @@ namespace Hector.Core.Reflection
             }
 
             return propertyValues;
+        }
+
+        public static void SetPropertyOrFieldValue<T>(this T item, string propertyName, object value, TypeAccessor? typeAccessor = null)
+        {
+            TypeAccessor accessor = typeAccessor ?? TypeAccessor.Create(typeof(T));
+            accessor[item, propertyName] = value;
+        }
+
+        public static bool IsSimpleType(this Type type)
+        {
+            if (!(type == typeof(string)) && !type.GetNonNullableType().IsPrimitive && !type.GetNonNullableType().IsNumericType() && !(type.GetNonNullableType() == typeof(DateTime)))
+            {
+                return type.IsEnum;
+            }
+
+            return true;
+        }
+
+        public static Type GetNonNullableType(this Type type)
+        {
+            if (type.IsNullableType())
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return type;
+        }
+
+        public static bool IsNullableType(this Type? type)
+        {
+            if (type is object && type!.IsGenericType)
+            {
+                return type!.GetGenericTypeDefinition() == typeof(Nullable<>);
+            }
+
+            return false;
+        }
+
+        public static bool IsNumericType(this Type? type)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            return ((uint)(typeCode - 4) <= 11u);
+        }
+
+        public static bool IsTypeTuple(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(Tuple<>)) && !genericTypeDefinition.Equals(typeof(Tuple<,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(Tuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].IsTypeTuple();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsTypeValueTuple(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(ValueTuple<>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].IsTypeValueTuple();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsTypeDictionary(this Type type)
+        {
+            return typeof(IDictionary<string, object>).IsAssignableFrom(type);
+        }
+
+        public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
+            type.GetAttributeOfType<TAttrib>() is not null;
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type)
+            where TAttrib : Attribute =>
+            type.GetAttributeOfType<TAttrib>(inherit: false);
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type, bool inherit)
+            where TAttrib : Attribute =>
+            type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().FirstOrDefault();
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit)
+            where TAttrib : Attribute =>
+            GetAttributeOfTypeImpl<TAttrib>(propertyInfo, inherit);
+
+        public static bool HasAttribute<TAttrib>(this PropertyInfo propertyInfo, bool inherit) where TAttrib : Attribute => propertyInfo.GetAttributeOfType<TAttrib>(inherit) is not null;
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit)
+            where TAttrib : Attribute =>
+            GetAttributeOfTypeImpl<TAttrib>(fieldInfo, inherit);
+
+        private static TAttrib? GetAttributeOfTypeImpl<TAttrib>(this MemberInfo memberInfo, bool inherit)
+            where TAttrib : Attribute =>
+            memberInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
+
+        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type)
+            where TAttrib : Attribute =>
+            type.GetAllAttributesOfType<TAttrib>(inherit: false);
+
+        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type, bool inherit)
+            where TAttrib : Attribute =>
+            type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().ToArray();
+
+        public static IEnumerable<T> ToEntityList<T>(this IEnumerable<DataRow> rows, bool throwIfPropertyNotFound = false, IEqualityComparer<string>? propertyNameComparer = null, Dictionary<Type, Func<object, object>>? typesMap = null, Dictionary<string, string>? propertyNamesMap = null)
+            where T : new()
+        {
+            foreach (DataRow dr in rows)
+            {
+                T newRow = dr.ToEntity<T>(throwIfPropertyNotFound, propertyNameComparer ?? StringComparer.OrdinalIgnoreCase, typesMap, propertyNamesMap);
+                yield return newRow;
+            }
+        }
+
+        // ToEntityList DataTable
+
+        public static IEnumerable<T> ToEntityList<T>(this DataTable table, bool throwIfPropertyNotFound = false, IEqualityComparer<string>? propertyNameComparer = null, Dictionary<Type, Func<object, object>>? typesMap = null, Dictionary<string, string>? propertyNamesMap = null)
+            where T : new() =>
+            table
+                .Rows
+                .Cast<DataRow>()
+                .ToEntityList<T>(throwIfPropertyNotFound, propertyNameComparer ?? StringComparer.OrdinalIgnoreCase, typesMap, propertyNamesMap);
+
+        public static T ToEntity<T>(this DataRow tableRow, bool throwIfPropertyNotFound, IEqualityComparer<string> propertyNameComparer, Dictionary<Type, Func<object, object>>? typesMap, Dictionary<string, string>? propertyNamesMap)
+        {
+            Type type = typeof(T);
+
+            T returnObj =
+                (T)Activator
+                    .CreateInstance(type)
+                    .GetNonNullOrThrow(nameof(returnObj));
+
+            TypeAccessor typeAccessor = TypeAccessor.Create(type);
+            Dictionary<string, Member> propertiesDict =
+                typeAccessor
+                    .GetUnorderedPropertyList()
+                    .ToDictionary(x => x.Name, propertyNameComparer);
+
+            foreach (DataColumn col in tableRow.Table.Columns)
+            {
+                string? mappedPropertyName = propertyNamesMap?.GetValueOrDefault(col.ColumnName);
+                Member? member = propertiesDict.GetValueOrDefault(mappedPropertyName ?? col.ColumnName);
+                if (member is null)
+                {
+                    if (throwIfPropertyNotFound)
+                    {
+                        throw new ArgumentException($"The property '{col.ColumnName}' has not been found");
+                    }
+
+                    continue;
+                }
+
+                Func<object, Type, object> cellConverter =
+                    typesMap is null
+                    ? (obj, t) => obj.ConvertTo(t)
+                    : (obj, t) => typesMap[t];
+
+                object value = cellConverter(tableRow[col], member.Type);
+                returnObj.SetPropertyOrFieldValue(member.Name, value);
+            }
+
+            return returnObj;
         }
     }
 }

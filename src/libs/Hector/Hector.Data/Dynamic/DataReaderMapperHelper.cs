@@ -1,5 +1,6 @@
 ﻿using Hector.Core;
 using Hector.Core.Cryptography;
+using Hector.Core.Reflection;
 using Hector.Data.Entities.Attributes;
 using System;
 using System.Collections.Concurrent;
@@ -31,7 +32,7 @@ namespace Hector.Data.Dynamic
             {
                 mapperCreator = _ => new ValueTask<IDataReaderToEntityMapper>(new DataReaderToTupleMapper(type));
             }
-            else if (type.TypeIsDictionary())
+            else if (type.IsTypeDictionary())
             {
                 mapperCreator = _ => new ValueTask<IDataReaderToEntityMapper>(new DataReaderToDictionaryMapper());
             }
@@ -78,7 +79,7 @@ namespace Hector.Data.Dynamic
 
             return
                 typeArguments.All(x => x.IsSimpleType())
-                && type.TypeIsTuple();
+                && type.IsTypeTuple();
         }
 
         private static bool TypeIsValueTupleOfSimpleTypes(this Type type)
@@ -87,7 +88,7 @@ namespace Hector.Data.Dynamic
 
             return
                 typeArguments.All(x => x.IsSimpleType())
-                && type.TypeIsValueTuple();
+                && type.IsTypeValueTuple();
         }
 
         private static bool TypeIsTupleOfMixedTypes(this Type type)
@@ -95,7 +96,7 @@ namespace Hector.Data.Dynamic
             var typeArguments = type.GenericTypeArguments;
 
             return
-                type.TypeIsTuple()
+                type.IsTypeTuple()
                 && typeArguments.Any(x => x.IsSimpleType())
                 && typeArguments.Any(x => !x.IsSimpleType());
         }
@@ -105,7 +106,7 @@ namespace Hector.Data.Dynamic
             var typeArguments = type.GenericTypeArguments;
 
             return
-                type.TypeIsValueTuple()
+                type.IsTypeValueTuple()
                 && typeArguments.Any(x => x.IsSimpleType())
                 && typeArguments.Any(x => !x.IsSimpleType());
         }
@@ -115,7 +116,7 @@ namespace Hector.Data.Dynamic
             var typeArguments = type.GenericTypeArguments;
 
             return
-                (type.TypeIsTuple() || type.TypeIsValueTuple())
+                (type.IsTypeTuple() || type.IsTypeValueTuple())
                 && typeArguments.All(x => !x.IsSimpleType());
         }
 

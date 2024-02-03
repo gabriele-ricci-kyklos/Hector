@@ -1,4 +1,5 @@
 ﻿using Hector.Core;
+using Hector.Core.Reflection;
 using System;
 using System.Data;
 using System.Reflection;
@@ -90,7 +91,7 @@ namespace Hector.Data.Dynamic
             Func<PropertyInfo, string>? property2FieldNameMapping = null
         )
         {
-            if (!type.TypeIsTuple() && !type.TypeIsValueTuple())
+            if (!type.IsTypeTuple() && !type.IsTypeValueTuple())
             {
                 throw new ArgumentException($"Type is not a generic tuple: {type.FullName}");
             }

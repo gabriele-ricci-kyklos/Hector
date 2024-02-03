@@ -1,12 +1,13 @@
 ﻿using FluentAssertions;
 using Hector.Core;
+using Hector.Core.Reflection;
 using System.Data;
 
-namespace Hector.Tests.Core.ExtensionMethods
+namespace Hector.Tests.Reflection
 {
     public class DataExtensionMethodsTests
     {
-        class Entity
+        public class Entity
         {
             public int Dosage { get; set; }
             public string? Drug { get; set; }
@@ -17,7 +18,7 @@ namespace Hector.Tests.Core.ExtensionMethods
 
             public override bool Equals(object? obj)
             {
-                if(obj is not Entity e)
+                if (obj is not Entity e)
                 {
                     return false;
                 }
