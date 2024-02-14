@@ -23,7 +23,7 @@ namespace Hector.Data
 
         IQueryBuilder NewQueryBuilder(string query = "");
 
-        Task<T> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
+        Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
         Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
         Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
     }
@@ -47,7 +47,7 @@ namespace Hector.Data
 
         public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper, Schema).SetQuery(query);
 
-        public async Task<T> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
+        public async Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
         {
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
@@ -58,16 +58,16 @@ namespace Hector.Data
             {
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                object result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                object? result = await command.ExecuteScalarAsync().ConfigureAwait(false);
 
                 try
                 {
-                    T value = result.ConvertTo<T>();
+                    T? value = default;
                     return value;
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidCastException($"Unable to cast return value to type {typeof(T).FullName}", ex);
+                    throw new InvalidCastException($"Unable to cast return value to type {typeof(T?).FullName}", ex);
                 }
             }
             finally
