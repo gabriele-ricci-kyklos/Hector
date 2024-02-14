@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\shared\CSharp9Support\IsExternalInit.cs" Link="IsExternalInit.cs" />
-    <Compile Include="..\..\..\shared\CSharp9Support\NullableExtensions.cs" Link="NullableExtensions.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Hector.Core.Reflection\Hector.Core.Reflection.csproj" />
     <ProjectReference Include="..\Hector.Core\Hector.Core.csproj" />
   </ItemGroup>
