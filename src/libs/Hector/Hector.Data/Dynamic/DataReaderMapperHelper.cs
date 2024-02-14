@@ -4,6 +4,7 @@ using Hector.Core.Reflection;
 using Hector.Data.Entities.Attributes;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace Hector.Data.Dynamic
             {
                 mapperCreator = _ => new ValueTask<IDataReaderToEntityMapper>(new DataReaderToTupleMapper(type));
             }
-            else if (type.IsTypeDictionary())
+            else if (TypeIsDictionary(type))
             {
                 mapperCreator = _ => new ValueTask<IDataReaderToEntityMapper>(new DataReaderToDictionaryMapper());
             }
@@ -119,6 +120,9 @@ namespace Hector.Data.Dynamic
                 (type.IsTypeTuple() || type.IsTypeValueTuple())
                 && typeArguments.All(x => !x.IsSimpleType());
         }
+
+        public static bool TypeIsDictionary(Type type) =>
+            typeof(IDictionary<string, object>).IsAssignableFrom(type);
 
         private static string BuildHashForType(Type? type, IDataReader? reader)
         {
