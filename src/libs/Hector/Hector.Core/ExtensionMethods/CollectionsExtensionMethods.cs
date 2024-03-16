@@ -13,7 +13,7 @@ namespace Hector.Core
             list is not null && list.Any();
 
         public static IEnumerable<T> ToEmptyIfNull<T>(this IEnumerable<T>? enumerable) =>
-            enumerable ?? Enumerable.Empty<T>();
+            enumerable ?? [];
 
         public static IEnumerable<T>? ToNullIfEmpty<T>(this IEnumerable<T>? list) =>
             list.IsNullOrEmptyList() ? null : list.ToEmptyIfNull();
