@@ -181,5 +181,18 @@ namespace Hector.Tests.Reflection
             source.Date = null;
             dest.Should().BeEquivalentTo(source);
         }
+
+        [Fact]
+        public void TestCompareProperties()
+        {
+            Entity obj = new() { Dosage = 50, Drug = "Drug Z", Diagnosis = "Problem Z", Date = DateTime.Now };
+            Entity2 obj2 = new() { Dosage = 50, Drug = "Drug Z", Diagnosis = "Problem Z", Date = obj.Date };
+
+            bool equals = PropertiesComparer.CompareProperties(obj, obj2);
+            equals.Should().BeTrue();
+
+            equals = PropertiesComparer.CompareProperties(obj, obj2, [ "Dosage", "Drug" ]);
+            equals.Should().BeTrue();
+        }
     }
 }
