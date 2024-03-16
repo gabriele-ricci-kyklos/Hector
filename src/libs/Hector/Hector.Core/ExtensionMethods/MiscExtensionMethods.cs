@@ -25,11 +25,11 @@ namespace Hector.Core
             return retValue;
         }
 
-        public static T? ToEnum<T>(this string s, T? failureValue) where T : struct
+        public static T? ToEnum<T>(this string s, T? failureValue = default) where T : struct
         {
             if (s.IsNullOrBlankString())
             {
-                return new T?();
+                return default;
             }
 
             if (Enum.TryParse(s, out T result))
