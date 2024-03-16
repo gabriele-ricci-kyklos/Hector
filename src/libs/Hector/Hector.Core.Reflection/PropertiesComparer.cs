@@ -4,7 +4,7 @@ namespace Hector.Core.Reflection
 {
     public static class PropertiesComparer
     {
-        public static bool CompareProperties<T, R>(T x, R y, string[] orderedProperties)
+        public static bool CompareProperties<T, R>(T x, R y, string[]? orderedProperties = null)
         {
             TypeAccessor TTypeAccessor = TypeAccessor.Create(typeof(T));
             TypeAccessor RTypeAccessor = TypeAccessor.Create(typeof(R));
@@ -19,7 +19,7 @@ namespace Hector.Core.Reflection
                     .GetUnorderedPropertyList()
                     .ToDictionary(x => x.Name);
 
-            foreach (string property in orderedProperties)
+            foreach (string property in orderedProperties.ToNullIfEmpty() ?? TmemberDict.Keys)
             {
                 Member? TMember =
                     TmemberDict
