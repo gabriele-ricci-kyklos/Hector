@@ -41,7 +41,7 @@ namespace Hector.Core.Reflection
 
                 if (xValue is null && yValue is null)
                 {
-                    return true;
+                    continue;
                 }
                 else if (xValue is null || yValue is null)
                 {
