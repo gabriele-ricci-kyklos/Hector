@@ -32,7 +32,7 @@ namespace Hector.Core.Compression
             return encoding.GetString(compressed);
         }
 
-        public static string DecompressStrings(string data, Encoding? encoding)
+        public static string DecompressStrings(string data, Encoding? encoding = null)
         {
             encoding ??= Encoding.UTF8;
             byte[] inputData = encoding.GetBytes(data);
