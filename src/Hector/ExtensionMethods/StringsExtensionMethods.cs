@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Hector.Core
@@ -24,6 +25,17 @@ namespace Hector.Core
             }
 
             return null;
+        }
+
+        public static string ToHexString(this byte[] bytes, bool toLower = true)
+        {
+            string s = BitConverter.ToString(bytes).Replace("-", "");
+            if (!toLower)
+            {
+                return s;
+            }
+
+            return s.ToLowerInvariant();
         }
     }
 }
