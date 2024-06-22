@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Hector.Core.Compression;
 using Hector.Core.Cryptography;
 using System.Text;
 
@@ -55,6 +56,17 @@ namespace Hector.Tests.Core.Cryptography
 
             string bHash = HashHelper.ComputeSHA512(_inputBytes);
             bHash.Should().Be(expectedOutput);
+        }
+
+        [Theory]
+        [InlineData("hector")]
+        [InlineData("c# programming language")]
+        public void TestNoisyEncryptor(string input)
+        {
+            string compressed = NoisyEncryptor.Encode(input, 10);
+            string decompressed = NoisyEncryptor.Decode(compressed);
+
+            decompressed.Should().Be(input);
         }
     }
 }
