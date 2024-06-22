@@ -200,7 +200,7 @@ namespace Hector.Tests.Core.ExtensionMethods
         [Fact]
         public void TestShuffle()
         {
-            int[] arr = [1, 2, 3];
+            int[] arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
             arr.Shuffle();
             arr.Should().NotBeInAscendingOrder();
         }
