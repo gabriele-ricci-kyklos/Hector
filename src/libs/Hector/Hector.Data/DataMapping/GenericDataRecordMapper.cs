@@ -1,6 +1,7 @@
 ﻿using Hector.Core;
 using Hector.Core.Reflection;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace Hector.Data.DataMapping
@@ -22,6 +23,7 @@ namespace Hector.Data.DataMapping
     internal class GenericDataRecordMapper<T>
     {
         private string[] _dataRecordColumns = [];
+        private readonly Dictionary<Type, IDataRecordMapper> _mappers = [];
 
         internal T Build(IDataRecord dataRecord)
         {
@@ -69,13 +71,18 @@ namespace Hector.Data.DataMapping
         {
             Type type = typeof(T);
 
+            if(_mappers.TryGetValue(type, out IDataRecordMapper? mapper))
+            {
+                return mapper;
+            }
+
             if (type.IsSimpleType() || type == typeof(byte[]))
             {
-                return new SingleValueDataRecordMapper(type, _dataRecordColumns);
+                mapper = new SingleValueDataRecordMapper(type, _dataRecordColumns);
             }
             else if (type.IsTypeTuple() || type.IsTypeValueTuple())
             {
-                return new TupleDataRecordMapper(type, _dataRecordColumns);
+                mapper = new TupleDataRecordMapper(type, _dataRecordColumns);
             }
             else if (type.IsTypeDictionary())
             {
@@ -83,8 +90,11 @@ namespace Hector.Data.DataMapping
             }
             else
             {
-                return new EntityDataRecordMapper(type, _dataRecordColumns);
+                mapper = new EntityDataRecordMapper(type, _dataRecordColumns);
             }
+
+            _mappers.Add(type, mapper);
+            return mapper;
         }
     }
 }
