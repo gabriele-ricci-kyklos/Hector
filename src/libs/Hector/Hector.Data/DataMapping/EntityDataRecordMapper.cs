@@ -15,6 +15,7 @@ namespace Hector.Data.DataMapping
     {
         private readonly TypeAccessor _typeAccessor;
         private readonly Dictionary<string, string> _propertiesMapping;
+        private readonly ObjectConstructor _typeConstructorDelegate;
 
         public override int FieldsCount => _propertiesMapping.Count;
 
@@ -28,13 +29,13 @@ namespace Hector.Data.DataMapping
             _propertiesMapping =
                 GetEntityPropertyInfoList()
                 .ToDictionary(x => x.ColumnName, x => x.PropertyName);
+
+            _typeConstructorDelegate = ObjectActivator.CreateILConstructorDelegate(_type);
         }
 
         public override object Build(int position, DataRecord[] records)
         {
-            object resultObj =
-                Activator.CreateInstance(_type)
-                ?? throw new InvalidOperationException("Unable to instantiate the object");
+            object resultObj = _typeConstructorDelegate();
 
             for (int i = 0; i < records.Length; ++i)
             {
