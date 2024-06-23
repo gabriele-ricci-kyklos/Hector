@@ -104,7 +104,7 @@ namespace Hector.Tests.Reflection
 
             typeof(Entity).GetOrderedPropertyList(nameof(Entity.Date).AsArray())
                 .Should().NotBeNull()
-                .And.Equal(expetedProps, (x, y) => x.Name == y);
+                .And.Equal(expetedProps, (x, y) => x.Member.Name == y);
         }
 
         [Fact]
