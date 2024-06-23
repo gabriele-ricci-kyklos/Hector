@@ -1,6 +1,5 @@
 ﻿using Hector.Core;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -34,7 +33,9 @@ namespace Hector.Data.DataMapping
 
             for (int i = 0; i < _types.Length; ++i)
             {
-                values[i] = BuildObject(_types[i], records, ref position);
+                IDataRecordMapper mapper = _mapperFactory.GetDataRecordMapper(_types[i]);
+                values[i] = mapper.Build(position, records);
+                position += mapper.FieldsCount;
             }
 
             object tuple = _constructor.Invoke(values);
