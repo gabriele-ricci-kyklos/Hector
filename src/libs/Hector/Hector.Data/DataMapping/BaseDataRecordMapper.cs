@@ -22,13 +22,5 @@ namespace Hector.Data.DataMapping
             _type = type;
             _mapperFactory = mapperFactory;
         }
-
-        protected object? BuildObject(Type type, DataRecord[] records, ref int position)
-        {
-            IDataRecordMapper mapper = _mapperFactory.GetDataRecordMapper(type);
-            object? dataObj = mapper.Build(position, records);
-            position += mapper.FieldsCount;
-            return dataObj;
-        }
     }
 }
