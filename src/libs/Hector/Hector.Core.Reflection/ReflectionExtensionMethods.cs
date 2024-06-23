@@ -6,17 +6,11 @@ namespace Hector.Core.Reflection
 {
     public static class ReflectionExtensionMethods
     {
-        public static IEnumerable<PropertyInfo> GetPropertiesForType(this Type type, params string[]? propertiesToExclude)
+        public static PropertyInfo[] GetPropertiesForType(this Type type, params string[]? propertiesToExclude)
         {
             HashSet<string> propsToExclude = new(propertiesToExclude.ToEmptyArrayIfNull());
             PropertyInfo[] properties = type.GetProperties();
-            foreach (PropertyInfo propertyInfo in properties)
-            {
-                if (!propsToExclude.Contains(propertyInfo.Name))
-                {
-                    yield return propertyInfo;
-                }
-            }
+            return properties.Where(x => !propsToExclude.Contains(x.Name)).ToArray();
         }
 
         public static Type[] GetTypeHierarchy(this Type type)
@@ -66,12 +60,12 @@ namespace Hector.Core.Reflection
             return returnList.ToArray();
         }
 
-        public static Member[] GetOrderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
+        public static (Member Member, PropertyInfo PropertyInfo)[] GetOrderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
             TypeAccessor
                 .Create(type)
                 .GetOrderedPropertyList(type, propertiesToExclude);
 
-        public static Member[] GetOrderedPropertyList(this TypeAccessor typeAccessor, Type type, string[]? propertiesToExclude = null)
+        public static (Member Member, PropertyInfo PropertyInfo)[] GetOrderedPropertyList(this TypeAccessor typeAccessor, Type type, string[]? propertiesToExclude = null)
         {
             Dictionary<string, Member> memberDict =
                 typeAccessor
@@ -80,8 +74,8 @@ namespace Hector.Core.Reflection
 
             Type[] typesHierarchyList = type.GetTypeHierarchy();
 
-            Dictionary<int, List<Member>> baseTypePropList = [];
-            List<Member> concreteTypePropList = [];
+            Dictionary<int, List<(Member Member, PropertyInfo PropertyInfo)>> baseTypePropList = [];
+            List<(Member Member, PropertyInfo PropertyInfo)> concreteTypePropList = [];
 
             foreach (PropertyInfo prop in type.GetPropertiesForType(propertiesToExclude.ToEmptyArrayIfNull()))
             {
@@ -95,14 +89,14 @@ namespace Hector.Core.Reflection
                 if (isBaseTypeProperty)
                 {
                     int typeHirearchyOrder = prop.DeclaringType is null ? -1 : Array.IndexOf(typesHierarchyList, prop.DeclaringType);
-                    if (!baseTypePropList.TryAdd(typeHirearchyOrder, new(member.AsArray())))
+                    if (!baseTypePropList.TryAdd(typeHirearchyOrder, new((member, prop).AsArray())))
                     {
-                        baseTypePropList[typeHirearchyOrder].Add(member);
+                        baseTypePropList[typeHirearchyOrder].Add((member, prop));
                     }
                 }
                 else
                 {
-                    concreteTypePropList.Add(member);
+                    concreteTypePropList.Add((member, prop));
                 }
             }
 
