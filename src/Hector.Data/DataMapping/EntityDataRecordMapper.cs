@@ -60,13 +60,7 @@ namespace Hector.Data.DataMapping
                 string columnName = properties[i].Name;
 
                 EntityPropertyInfoAttribute? attrib = properties[i].GetAttributeOfType<EntityPropertyInfoAttribute>(true);
-
-                if (attrib is not null)
-                {
-                    columnName = attrib.ColumnName;
-                }
-
-                results[i] = new EntityPropertyInfo(properties[i].Name, columnName);
+                results[i] = new EntityPropertyInfo(properties[i].Name, attrib?.ColumnName ?? properties[i].Name);
             }
 
             return results.ToArray();
