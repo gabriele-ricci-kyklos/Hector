@@ -3,6 +3,7 @@ using FluentAssertions;
 using Hector.Core;
 using Hector.Core.Reflection;
 using System.Data;
+using System.Diagnostics;
 
 namespace Hector.Tests.Reflection
 {
@@ -191,8 +192,67 @@ namespace Hector.Tests.Reflection
             bool equals = PropertiesComparer.CompareProperties(obj, obj2);
             equals.Should().BeTrue();
 
-            equals = PropertiesComparer.CompareProperties(obj, obj2, [ "Dosage", "Drug" ]);
+            equals = PropertiesComparer.CompareProperties(obj, obj2, ["Dosage", "Drug"]);
             equals.Should().BeTrue();
+        }
+
+        [Fact]
+        public void TestObjectCreationBenchmark()
+        {
+            Type type = typeof(Entity);
+            var ctorDelegate = ObjectActivator.CreateILConstructorDelegate(type);
+            var exprDelegate = ObjectActivator.CreateExpressionConstructorDelegate(type);
+            int cycles = 1000000;
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < cycles; ++i)
+            {
+                _ = new Entity();
+            }
+            stopwatch.Stop();
+            var newOpElapsed = stopwatch.Elapsed;
+            stopwatch.Restart();
+            for (int i = 0; i < cycles; ++i)
+            {
+                _ = ctorDelegate();
+            }
+            stopwatch.Stop();
+            var ctorDelElapsed = stopwatch.Elapsed;
+            stopwatch.Restart();
+            for (int i = 0; i < cycles; ++i)
+            {
+                _ = ctorDelegate();
+            }
+            stopwatch.Stop();
+            var exprDelElapsed = stopwatch.Elapsed;
+            stopwatch.Restart();
+            for (int i = 0; i < cycles; ++i)
+            {
+                _ = Activator.CreateInstance(type);
+            }
+            stopwatch.Stop();
+            var activElapsed = stopwatch.Elapsed;
+            stopwatch.Stop();
+        }
+
+        [Fact]
+        public void TestObjectCreationIL()
+        {
+            object obj = ObjectActivator.CreateInstanceIL(typeof(Entity));
+            Entity obj2 = ObjectActivator.CreateInstanceIL<Entity>();
+
+            obj.GetType().Should().Be(typeof(Entity));
+            obj2.GetType().Should().Be(typeof(Entity));
+        }
+
+        [Fact]
+        public void TestObjectCreationExpression()
+        {
+            object obj = ObjectActivator.CreateInstanceExpression(typeof(Entity));
+            Entity obj2 = ObjectActivator.CreateInstanceExpression<Entity>();
+
+            obj.GetType().Should().Be(typeof(Entity));
+            obj2.GetType().Should().Be(typeof(Entity));
         }
     }
 }
