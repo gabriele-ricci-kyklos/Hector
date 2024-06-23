@@ -1,4 +1,5 @@
 ﻿using Hector.Core;
+using Hector.Data.DataMapping;
 using Hector.Data.Dynamic;
 using Hector.Data.Queries;
 using System;
@@ -111,9 +112,9 @@ namespace Hector.Data
                 await connection.OpenAsync().ConfigureAwait(false);
                 using DbDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
-                int i = 0;
-                IDataReaderToEntityMapper? mapper = null;
-                List<T> results = new();
+                List<T> results = [];
+                GenericDataRecordMapper<T> mapper = new();
+                //IDataReaderToEntityMapper? mapper = null;
 
                 while
                 (
@@ -121,9 +122,10 @@ namespace Hector.Data
                     (await reader.ReadAsync().ConfigureAwait(false))
                 )
                 {
-                    mapper ??= await mapperCreator(reader).ConfigureAwait(false);
-                    object value = await mapper!.BuildAsync(reader, ++i).ConfigureAwait(false);
-                    T item = (value is null ? default : value.ConvertTo<T>())!;
+                    T item = mapper.Build(reader);
+                    //mapper ??= await mapperCreator(reader).ConfigureAwait(false);
+                    //object value = await mapper!.BuildAsync(reader, ++i).ConfigureAwait(false);
+                    //T item = (value is null ? default : value.ConvertTo<T>())!;
                     results.Add(item);
                 }
 
