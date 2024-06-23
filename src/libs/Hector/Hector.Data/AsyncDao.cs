@@ -103,10 +103,6 @@ namespace Hector.Data
 
             PrepareDbCommand(command, queryBuilder, timeout);
 
-            Func<DbDataReader, ValueTask<IDataReaderToEntityMapper>> mapperCreator =
-                DataReaderMapperHelper
-                    .CreateMapperFunction(typeof(T), IsStringDataType);
-
             try
             {
                 await connection.OpenAsync().ConfigureAwait(false);
@@ -114,7 +110,6 @@ namespace Hector.Data
 
                 List<T> results = [];
                 GenericDataRecordMapper<T> mapper = new();
-                //IDataReaderToEntityMapper? mapper = null;
 
                 while
                 (
@@ -123,9 +118,6 @@ namespace Hector.Data
                 )
                 {
                     T item = mapper.Build(reader);
-                    //mapper ??= await mapperCreator(reader).ConfigureAwait(false);
-                    //object value = await mapper!.BuildAsync(reader, ++i).ConfigureAwait(false);
-                    //T item = (value is null ? default : value.ConvertTo<T>())!;
                     results.Add(item);
                 }
 

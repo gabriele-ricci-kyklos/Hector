@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace Hector.Data.DataMapping
 {
-    record EntityPropertyInfo(string PropertyName, string ColumnName);
+    record EntityPropertyInfo(Type Type, string PropertyName, string ColumnName);
 
     internal class EntityDataRecordMapper : BaseDataRecordMapper
     {
@@ -19,8 +19,8 @@ namespace Hector.Data.DataMapping
 
         public override int FieldsCount => _propertiesMapping.Count;
 
-        public EntityDataRecordMapper(Type type, string[] dataRecordColumns)
-            : base(type, dataRecordColumns)
+        public EntityDataRecordMapper(Type type, DataRecordMapperFactory mapperFactory)
+            : base(type, mapperFactory)
         {
             _typeAccessor =
                 TypeAccessor
@@ -57,10 +57,8 @@ namespace Hector.Data.DataMapping
 
             for (int i = 0; i < properties.Length; ++i)
             {
-                string columnName = properties[i].Name;
-
                 EntityPropertyInfoAttribute? attrib = properties[i].GetAttributeOfType<EntityPropertyInfoAttribute>(true);
-                results[i] = new EntityPropertyInfo(properties[i].Name, attrib?.ColumnName ?? properties[i].Name);
+                results[i] = new EntityPropertyInfo(properties[i].PropertyType, properties[i].Name, attrib?.ColumnName ?? properties[i].Name);
             }
 
             return results.ToArray();
