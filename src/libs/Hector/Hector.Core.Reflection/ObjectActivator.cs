@@ -4,6 +4,8 @@ using System.Reflection.Emit;
 
 namespace Hector.Core.Reflection
 {
+    //credits: https://stackoverflow.com/questions/4432026/activator-createinstance-performance-alternative
+
     public delegate object ObjectConstructor();
 
     public class ObjectActivator
