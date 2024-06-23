@@ -7,8 +7,8 @@ namespace Hector.Data.DataMapping
     {
         public override int FieldsCount => 1;
 
-        public SingleValueDataRecordMapper(Type type, string[] dataRecordColumns)
-            : base(type, dataRecordColumns)
+        public SingleValueDataRecordMapper(Type type, DataRecordMapperFactory mapperFactory)
+            : base(type, mapperFactory)
         {
         }
 

@@ -11,16 +11,24 @@ namespace Hector.Data.DataMapping
     internal abstract class BaseDataRecordMapper : IDataRecordMapper
     {
         protected Type _type;
-        protected string[] _dataRecordColumns = [];
+        protected DataRecordMapperFactory _mapperFactory;
 
         public abstract int FieldsCount { get; }
 
         public abstract object? Build(int position, DataRecord[] records);
 
-        protected BaseDataRecordMapper(Type type, string[] dataRecordColumns)
+        protected BaseDataRecordMapper(Type type, DataRecordMapperFactory mapperFactory)
         {
             _type = type;
-            _dataRecordColumns = dataRecordColumns;
+            _mapperFactory = mapperFactory;
+        }
+
+        protected object? BuildObject(Type type, DataRecord[] records, ref int position)
+        {
+            IDataRecordMapper mapper = _mapperFactory.GetDataRecordMapper(type);
+            object? dataObj = mapper.Build(position, records);
+            position += mapper.FieldsCount;
+            return dataObj;
         }
     }
 }
