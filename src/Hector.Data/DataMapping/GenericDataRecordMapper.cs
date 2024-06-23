@@ -22,6 +22,7 @@ namespace Hector.Data.DataMapping
     {
         private string[] _dataRecordColumns = [];
         private readonly DataRecordMapperFactory mapperFactory = new();
+        private readonly Type _type = typeof(T);
 
         internal T Build(IDataRecord dataRecord)
         {
@@ -44,7 +45,7 @@ namespace Hector.Data.DataMapping
                 records[i] = new(name, values[i]);
             }
 
-            IDataRecordMapper mapper = mapperFactory.GetDataRecordMapper<T>();
+            IDataRecordMapper mapper = mapperFactory.GetDataRecordMapper(_type);
 
             object resultObj =
                 mapper.Build(0, records)
