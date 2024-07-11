@@ -53,6 +53,24 @@ namespace Hector.Tests.Reflection
             public DateTime? Date { get; set; }
         }
 
+        public class Entity4
+        {
+            public int Dosage { get; set; }
+            public string? Drug { get; set; }
+            public string? Diagnosis { get; set; }
+            public DateTime? Date { get; set; }
+
+            public Entity4(int dosage, string? drug, string? diagnosis, DateTime? date)
+            {
+                Dosage = dosage;
+                Drug = drug;
+                Diagnosis = diagnosis;
+                Date = date;
+            }
+        }
+
+
+
         [Fact]
         public void TestToEntityList()
         {
@@ -253,6 +271,14 @@ namespace Hector.Tests.Reflection
 
             obj.GetType().Should().Be(typeof(Entity));
             obj2.GetType().Should().Be(typeof(Entity));
+        }
+
+        [Fact]
+        public void TestDynamicCtor()
+        {
+            var instance =
+                ObjectActivator
+                    .CreateInstance(typeof(Entity4), [1, "a", "b", null]);
         }
     }
 }

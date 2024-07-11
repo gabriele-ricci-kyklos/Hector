@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 namespace Hector.Core.Reflection
 {
     //credits: https://stackoverflow.com/questions/4432026/activator-createinstance-performance-alternative
+    //credits: https://stackoverflow.com/questions/26477540/creating-a-dynamicmethod-to-invoke-a-constructor
 
     public delegate object ObjectConstructor();
 
@@ -51,6 +52,49 @@ namespace Hector.Core.Reflection
             Expression<Func<object>> lambdaExpr = Expression.Lambda<Func<object>>(newExpr);
             Func<object> func = lambdaExpr.Compile();
             return func;
+        }
+
+        public static object? CreateInstance(Type type, object[] args)
+        {
+            DynamicMethod dynamicCtor = CreateDynamicConstructor(type);
+            return dynamicCtor.Invoke(null, args);
+        }
+
+        public static DynamicMethod CreateDynamicConstructor(Type type)
+        {
+            ConstructorInfo constructor =
+                type
+                    .GetConstructors()
+                    .First();
+
+            ParameterInfo[] parameters = constructor.GetParameters();
+            Type[] argTypes = parameters.Select(x => x.ParameterType).ToArray();
+
+            DynamicMethod dynamicMethod = new($"{type.FullName}_Create", type, argTypes, typeof(ObjectActivator), true);
+            ILGenerator ilGenerator = dynamicMethod.GetILGenerator();
+
+            for (int i = 0; i < parameters.Length; ++i)
+            {
+                var param = parameters[i];
+                
+                if(param.ParameterType.IsNullableType())
+                {
+                    ilGenerator.Emit(OpCodes.Ldarga_S, i);
+                    var underlyingType = Nullable.GetUnderlyingType(param.ParameterType);
+                    var getValue = param.ParameterType.GetProperty("Value").GetGetMethod();
+                    ilGenerator.Emit(OpCodes.Call, getValue);
+                    ilGenerator.Emit(OpCodes.Newobj, param.ParameterType.GetConstructors().First());
+                }
+                else
+                {
+                    ilGenerator.Emit(OpCodes.Ldarg_S, i);
+                }
+            }
+
+            ilGenerator.Emit(OpCodes.Newobj, constructor);
+            ilGenerator.Emit(OpCodes.Ret);
+
+            return dynamicMethod;
         }
     }
 }
