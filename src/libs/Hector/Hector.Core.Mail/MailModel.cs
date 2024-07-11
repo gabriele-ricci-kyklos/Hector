@@ -16,32 +16,40 @@ namespace Hector.Core.Mail
 
         public string? Sender { get; }
         public string[] ToAddressList { get; }
+        public string[]? CCAddressList { get; }
+        public string[]? BCCAddressList { get; }
 
         public string Body => BodyBuilder.ToString();
         public string Footer => FooterBuilder.ToString();
 
         public IReadOnlyList<Attachment> Attachments => _attachments;
 
-        public MailModel(bool containsHtml, string subject, string body, string? footer, string[] toAddressList)
-            : this(containsHtml, null, subject, body, footer, toAddressList)
+        public MailModel(bool containsHtml, string subject, string body, string? footer, string[] toAddressList, string[]? ccAddressList = null, string[]? bccAddressList = null)
+            : this(containsHtml, null, subject, body, footer, toAddressList, ccAddressList, bccAddressList)
         {
         }
 
-        public MailModel(bool containsHtml, string? sender, string subject, string body, string? footer, string[] toAddressList)
+        public MailModel(bool containsHtml, string? sender, string subject, string body, string? footer, string[] toAddressList, string[]? ccAddressList = null, string[]? bccAddressList = null)
         {
             _attachments = [];
 
-            BodyBuilder = new StringBuilder(body);
-            FooterBuilder = new StringBuilder(footer);
+            BodyBuilder = new(body);
+            FooterBuilder = new(footer);
 
             ContainsHtml = containsHtml;
             Sender = sender;
             Subject = subject;
+
             ToAddressList = toAddressList;
+            CCAddressList = ccAddressList;
+            BCCAddressList = bccAddressList;
         }
 
-        public void AddAttachment(string name, byte[] bytes) =>
-            AddAttachment(name, new MemoryStream(bytes));
+        public void AddAttachment(string name, byte[] imageBytes)
+        {
+            Attachment attachment = new(new MemoryStream(imageBytes), name);
+            _attachments.Add(attachment);
+        }
 
         public void AddAttachment(string name, Stream stream)
         {
@@ -60,7 +68,7 @@ namespace Hector.Core.Mail
 
             string? mailBody = $"{Body}{Environment.NewLine}{Footer}";
 
-            if (_attachments.Any())
+            if (_attachments.Count != 0)
             {
                 foreach (Attachment res in _attachments)
                 {
@@ -71,6 +79,16 @@ namespace Hector.Core.Mail
             mailMessage.IsBodyHtml = ContainsHtml;
             mailMessage.Body = mailBody;
             mailMessage.To.Add(ToAddressList.StringJoin(","));
+
+            if (!CCAddressList.IsNullOrEmptyList())
+            {
+                mailMessage.CC.Add(CCAddressList!.StringJoin(","));
+            }
+
+            if (!BCCAddressList.IsNullOrEmptyList())
+            {
+                mailMessage.Bcc.Add(BCCAddressList!.StringJoin(","));
+            }
 
             return mailMessage;
         }
