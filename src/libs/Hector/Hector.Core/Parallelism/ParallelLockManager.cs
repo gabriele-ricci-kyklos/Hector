@@ -10,6 +10,9 @@ namespace Hector.Core.Parallelism
     {
         private readonly ConcurrentDictionary<TKey, SemaphoreSlim> _keyLocks = new();
 
+        public Task<T> ExecuteLockedCallAsync<T>(TKey key, Func<Task<T>> action, int timeoutSeconds, CancellationToken ctoken = default) =>
+            ExecuteLockedCallAsync(key, action, timeoutSeconds.Seconds(), ctoken);
+
         public async Task<T> ExecuteLockedCallAsync<T>(TKey key, Func<Task<T>> action, TimeSpan? timeout = null, CancellationToken ctoken = default)
         {
             SemaphoreSlim lockItem = _keyLocks.GetOrAdd(key, x => new SemaphoreSlim(initialCount, maxCount));
