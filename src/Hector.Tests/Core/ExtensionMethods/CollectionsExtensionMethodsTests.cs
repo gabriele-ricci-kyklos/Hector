@@ -212,5 +212,32 @@ namespace Hector.Tests.Core.ExtensionMethods
             var matrix = arr.Split(2);
             matrix.Should().AllSatisfy(x => x.Should().HaveCount(2));
         }
+
+        [Fact]
+        public void TestMergeDict()
+        {
+            Dictionary<int, int> dictSource = new()
+            {
+                {1, 1},
+                {2, 2}
+            };
+
+            Dictionary<int, int> dictDest = new()
+            {
+                {1, 4},
+                {2, 5},
+                {3, 6}
+            };
+
+            var res = dictSource.MergeLeft(dictDest);
+            res[1].Should().Be(1);
+            res[2].Should().Be(2);
+            res[3].Should().Be(6);
+
+            res = dictSource.MergeRight(dictDest);
+            res[1].Should().Be(4);
+            res[2].Should().Be(5);
+            res[3].Should().Be(6);
+        }
     }
 }
