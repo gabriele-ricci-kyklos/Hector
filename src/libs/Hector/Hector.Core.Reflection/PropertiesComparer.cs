@@ -11,12 +11,12 @@ namespace Hector.Core.Reflection
 
             Dictionary<string, Member> TmemberDict =
                 TTypeAccessor
-                    .GetUnorderedPropertyList()
+                    .GetMemberList()
                     .ToDictionary(x => x.Name);
 
             Dictionary<string, Member> RmemberDict =
                 RTypeAccessor
-                    .GetUnorderedPropertyList()
+                    .GetMemberList()
                     .ToDictionary(x => x.Name);
 
             foreach (string property in orderedProperties.ToNullIfEmpty() ?? TmemberDict.Keys)

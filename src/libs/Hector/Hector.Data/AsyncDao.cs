@@ -1,6 +1,5 @@
 ﻿using Hector.Core;
 using Hector.Data.DataMapping;
-using Hector.Data.Dynamic;
 using Hector.Data.Queries;
 using System;
 using System.Collections.Generic;

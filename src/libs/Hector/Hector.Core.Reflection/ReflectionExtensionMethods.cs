@@ -6,7 +6,7 @@ namespace Hector.Core.Reflection
 {
     public static class ReflectionExtensionMethods
     {
-        public static PropertyInfo[] GetPropertiesForType(this Type type, params string[]? propertiesToExclude)
+        public static PropertyInfo[] GetPropertyInfoList(this Type type, params string[]? propertiesToExclude)
         {
             HashSet<string> propsToExclude = new(propertiesToExclude.ToEmptyArrayIfNull());
             PropertyInfo[] properties = type.GetProperties();
@@ -30,73 +30,32 @@ namespace Hector.Core.Reflection
             return typesHierarchyList.ToArray();
         }
 
-        public static Member[] GetUnorderedPropertyList<T>(this T obj, string[]? propertiesToExclude = null)
-            where T : notnull =>
-            TypeAccessor
-                .Create(obj.GetType())
-                .GetUnorderedPropertyList(propertiesToExclude);
-
-        public static Member[] GetUnorderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
+        public static PropertyInfo[] GetHierarchicalOrderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
             TypeAccessor
                 .Create(type)
-                .GetUnorderedPropertyList(propertiesToExclude);
+                .GetHierarchicalOrderedPropertyList(type, propertiesToExclude);
 
-        public static Member[] GetUnorderedPropertyList(this TypeAccessor typeAccessor, string[]? propertiesToExclude = null)
+        public static PropertyInfo[] GetHierarchicalOrderedPropertyList(this TypeAccessor typeAccessor, Type type, string[]? propertiesToExclude = null)
         {
-            MemberSet members = typeAccessor.GetMembers();
-            HashSet<string> propertiesToExcludeSet = new(propertiesToExclude.ToEmptyIfNull(), StringComparer.OrdinalIgnoreCase);
-            List<Member> returnList = [];
-
-            foreach (Member member in members)
-            {
-                if (propertiesToExcludeSet.Contains(member.Name))
-                {
-                    continue;
-                }
-
-                returnList.Add(member);
-            }
-
-            return returnList.ToArray();
-        }
-
-        public static (Member Member, PropertyInfo PropertyInfo)[] GetOrderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
-            TypeAccessor
-                .Create(type)
-                .GetOrderedPropertyList(type, propertiesToExclude);
-
-        public static (Member Member, PropertyInfo PropertyInfo)[] GetOrderedPropertyList(this TypeAccessor typeAccessor, Type type, string[]? propertiesToExclude = null)
-        {
-            Dictionary<string, Member> memberDict =
-                typeAccessor
-                    .GetMembers()
-                    .ToDictionary(x => x.Name);
-
             Type[] typesHierarchyList = type.GetTypeHierarchy();
 
-            Dictionary<int, List<(Member Member, PropertyInfo PropertyInfo)>> baseTypePropList = [];
-            List<(Member Member, PropertyInfo PropertyInfo)> concreteTypePropList = [];
+            Dictionary<int, List<PropertyInfo>> baseTypePropList = [];
+            List<PropertyInfo> concreteTypePropList = [];
 
-            foreach (PropertyInfo prop in type.GetPropertiesForType(propertiesToExclude.ToEmptyArrayIfNull()))
+            foreach (PropertyInfo prop in type.GetPropertyInfoList(propertiesToExclude.ToEmptyArrayIfNull()))
             {
-                Member? member = memberDict.GetValueOrDefault(prop.Name);
-                if (member is null)
-                {
-                    continue;
-                }
-
                 bool isBaseTypeProperty = prop.DeclaringType != prop.ReflectedType;
                 if (isBaseTypeProperty)
                 {
                     int typeHirearchyOrder = prop.DeclaringType is null ? -1 : Array.IndexOf(typesHierarchyList, prop.DeclaringType);
-                    if (!baseTypePropList.TryAdd(typeHirearchyOrder, new((member, prop).AsArray())))
+                    if (!baseTypePropList.TryAdd(typeHirearchyOrder, new(prop.AsArray())))
                     {
-                        baseTypePropList[typeHirearchyOrder].Add((member, prop));
+                        baseTypePropList[typeHirearchyOrder].Add(prop);
                     }
                 }
                 else
                 {
-                    concreteTypePropList.Add((member, prop));
+                    concreteTypePropList.Add(prop);
                 }
             }
 
@@ -108,32 +67,24 @@ namespace Hector.Core.Reflection
                     .ToArray();
         }
 
-        public static Dictionary<string, object> GetPropertyValues<T>(this T item, TypeAccessor? typeAccessor = null, Member[]? propertyList = null, string[]? propertiesToExclude = null)
+        public static Dictionary<string, object?> GetPropertyValues(this object item, PropertyInfo[]? propertyList = null, string[]? propertiesToExclude = null)
         {
-            TypeAccessor accessor = typeAccessor ?? TypeAccessor.Create(typeof(T));
-
-            Member[] properties = propertyList.ToNullIfEmptyArray() ?? accessor.GetUnorderedPropertyList(propertiesToExclude);
+            PropertyInfo[] properties = propertyList.ToNullIfEmptyArray() ?? item.GetType().GetHierarchicalOrderedPropertyList(propertiesToExclude);
             HashSet<string> propertiesToExcludeSet = new(propertiesToExclude.ToEmptyIfNull(), StringComparer.OrdinalIgnoreCase);
-            Dictionary<string, object> propertyValues = [];
+            Dictionary<string, object?> propertyValues = [];
 
-            foreach (Member property in properties)
+            foreach (PropertyInfo property in properties)
             {
                 if (propertiesToExcludeSet.Contains(property.Name))
                 {
                     continue;
                 }
 
-                object propertyValue = accessor[item, property.Name];
+                object? propertyValue = property.GetValue(item, null);
                 propertyValues.Add(property.Name, propertyValue);
             }
 
             return propertyValues;
-        }
-
-        public static void SetPropertyOrFieldValue<T>(this T item, string propertyName, object value, TypeAccessor? typeAccessor = null)
-        {
-            TypeAccessor accessor = typeAccessor ?? TypeAccessor.Create(typeof(T));
-            accessor[item, propertyName] = value;
         }
 
         public static bool IsSimpleType(this Type type)
@@ -276,7 +227,7 @@ namespace Hector.Core.Reflection
             TypeAccessor typeAccessor = TypeAccessor.Create(type);
             Dictionary<string, Member> propertiesDict =
                 typeAccessor
-                    .GetUnorderedPropertyList()
+                    .GetMemberList()
                     .ToDictionary(x => x.Name, propertyNameComparer);
 
             foreach (DataColumn col in tableRow.Table.Columns)
@@ -299,7 +250,7 @@ namespace Hector.Core.Reflection
                     : (obj, t) => typesMap[t];
 
                 object value = cellConverter(tableRow[col], member.Type);
-                returnObj.SetPropertyOrFieldValue(member.Name, value);
+                returnObj.SetMemberValue(member.Name, value);
             }
 
             return returnObj;
@@ -317,10 +268,10 @@ namespace Hector.Core.Reflection
 
             Dictionary<string, Member> dstPropsDict =
                 dstAcc
-                    .GetUnorderedPropertyList(propertiesToExclude)
+                    .GetMemberList(propertiesToExclude)
                     .ToDictionary(x => x.Name, StringComparer.InvariantCultureIgnoreCase);
 
-            Member[] props = srcAcc.GetUnorderedPropertyList(propertiesToExclude);
+            Member[] props = srcAcc.GetMemberList(propertiesToExclude);
             foreach (Member p in props)
             {
                 Member? dstProp = dstPropsDict.GetValueOrDefault(p.Name);
