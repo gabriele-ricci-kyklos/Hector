@@ -1,12 +1,10 @@
-﻿using FastMember;
+﻿using Hector.Core.Reflection;
 using Hector.Data;
+using Hector.Data.DataReaders;
 using Hector.Data.Entities.Attributes;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Data.SqlClient;
-using Hector.Core.Reflection;
-using Hector.Data.DataReaders;
 
 namespace Hector.Tests.Data
 {
