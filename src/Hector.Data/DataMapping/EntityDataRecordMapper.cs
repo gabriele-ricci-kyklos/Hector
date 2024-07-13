@@ -52,7 +52,7 @@ namespace Hector.Data.DataMapping
 
         private EntityPropertyInfo[] GetEntityPropertyInfoList()
         {
-            PropertyInfo[] properties = _type.GetPropertiesForType();
+            PropertyInfo[] properties = _type.GetPropertyInfoList();
             EntityPropertyInfo[] results = new EntityPropertyInfo[properties.Length];
 
             for (int i = 0; i < properties.Length; ++i)
