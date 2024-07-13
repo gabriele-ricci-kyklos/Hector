@@ -1,7 +1,12 @@
-﻿using Hector.Data;
+﻿using FastMember;
+using Hector.Data;
 using Hector.Data.Entities.Attributes;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Data.SqlClient;
+using Hector.Core.Reflection;
+using Hector.Data.DataReaders;
 
 namespace Hector.Tests.Data
 {
@@ -25,7 +30,7 @@ namespace Hector.Tests.Data
             public decimal? FreeAmountTime { get; set; }
 
             [EntityPropertyInfo(ColumnName = "TimeNote", DbType = PropertyDbType.String, IsNullable = true, MaxLength = 4000, ColumnOrder = 60)]
-            public string TimeNote { get; set; }
+            public string? TimeNote { get; set; }
 
             [EntityPropertyInfo(ColumnName = "ReasonID", DbType = PropertyDbType.Integer, IsNullable = false, ColumnOrder = 70)]
             public int ReasonId { get; set; }
@@ -55,9 +60,20 @@ namespace Hector.Tests.Data
             IQueryBuilder queryBuilder =
                 dao
                     .NewQueryBuilder()
-                    .SetQuery("select JobID, MemberID from JobTimes");
+                    .SetQuery("select * from JobTimes");
 
-            var results = await dao.ExecuteSelectQueryAsync<(long, long)>(queryBuilder);
+            var results = await dao.ExecuteSelectQueryAsync<Result>(queryBuilder);
+
+            var properties = typeof(Result).GetHierarchicalOrderedPropertyList().Select(x => x.Name).ToArray();
+            var reader = new EnumerableDataReader<Result>(results);
+
+            using var conn = new SqlConnection(options.ConnectionString);
+            await conn.OpenAsync();
+            using (var bcp = new SqlBulkCopy(conn))
+            {
+                bcp.DestinationTableName = "JobTimes2";
+                await bcp.WriteToServerAsync(reader);
+            }
         }
     }
 }
