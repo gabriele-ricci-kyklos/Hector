@@ -125,7 +125,7 @@ namespace Hector.Core
             return result;
         }
 
-        public enum DictMergeStrategy { Override, Keep }
+        internal enum DictMergeStrategy { Override, Keep }
 
         public static Dictionary<K, V> MergeLeft<K, V>(this Dictionary<K, V> me, params Dictionary<K, V>[] others)
             where K : notnull =>
@@ -135,31 +135,32 @@ namespace Hector.Core
             where K : notnull =>
             me.Merge(DictMergeStrategy.Override, others);
 
-        public static Dictionary<K, V> Merge<K, V>(this Dictionary<K, V> me, DictMergeStrategy mergeStrategy, params Dictionary<K, V>[] others)
+        private static Dictionary<K, V> Merge<K, V>(this Dictionary<K, V> me, DictMergeStrategy mergeStrategy, params Dictionary<K, V>[] others)
             where K : notnull
         {
             int capacity = me.Count + others.Sum(x => x.Count);
-            Dictionary<K, V> newMap = new(capacity, me.Comparer);
+            Dictionary<K, V> newMap = new(me, me.Comparer);
 
-            foreach (Dictionary<K, V> src in others)
+            var allData =
+                others
+                    .SelectMany(x => x);
+
+            foreach (KeyValuePair<K, V> p in allData)
             {
-                foreach (KeyValuePair<K, V> p in src)
+                if (!me.TryGetValue(p.Key, out V? value))
                 {
-                    if (!me.TryGetValue(p.Key, out V? value))
-                    {
-                        newMap[p.Key] = p.Value;
-                    }
-                    else
-                    {
-                        newMap[p.Key] = mergeStrategy switch
-                        {
-                            DictMergeStrategy.Override => p.Value,
-                            DictMergeStrategy.Keep => value,
-                            _ => throw new NotSupportedException()
-                        };
-                    }
+                    newMap[p.Key] = p.Value;
                 }
-            };
+                else
+                {
+                    newMap[p.Key] = mergeStrategy switch
+                    {
+                        DictMergeStrategy.Override => p.Value,
+                        DictMergeStrategy.Keep => value,
+                        _ => throw new NotSupportedException()
+                    };
+                }
+            }
 
             return newMap;
         }
