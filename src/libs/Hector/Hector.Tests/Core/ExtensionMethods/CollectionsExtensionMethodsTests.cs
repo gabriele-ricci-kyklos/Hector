@@ -239,5 +239,40 @@ namespace Hector.Tests.Core.ExtensionMethods
             res[2].Should().Be(5);
             res[3].Should().Be(6);
         }
+
+        [Fact]
+        public void TestMergeDictWithEmpty()
+        {
+            Dictionary<int, int> dictSource = new()
+            {
+                {1, 1},
+                {2, 2}
+            };
+
+            Dictionary<int, int> dictDest = [];
+
+            var res = dictSource.MergeLeft(dictDest);
+            res[1].Should().Be(1);
+            res[2].Should().Be(2);
+
+            res = dictSource.MergeRight(dictDest);
+            res[1].Should().Be(1);
+            res[2].Should().Be(2);
+
+            dictSource = [];
+            dictDest = new()
+            {
+                {1, 1},
+                {2, 2}
+            };
+
+            res = dictSource.MergeLeft(dictDest);
+            res[1].Should().Be(1);
+            res[2].Should().Be(2);
+
+            res = dictSource.MergeRight(dictDest);
+            res[1].Should().Be(1);
+            res[2].Should().Be(2);
+        }
     }
 }
