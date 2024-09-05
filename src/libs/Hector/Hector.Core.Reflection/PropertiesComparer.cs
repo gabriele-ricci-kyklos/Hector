@@ -4,7 +4,7 @@ namespace Hector.Core.Reflection
 {
     public static class PropertiesComparer
     {
-        public static bool CompareProperties<T, R>(T x, R y, string[]? orderedProperties = null)
+        public static bool CompareProperties<T, R>(T x, R y, string[]? orderedProperties = null, bool useUnderlyingTypeForNullables = true)
         {
             TypeAccessor TTypeAccessor = TypeAccessor.Create(typeof(T));
             TypeAccessor RTypeAccessor = TypeAccessor.Create(typeof(R));
@@ -31,7 +31,10 @@ namespace Hector.Core.Reflection
                         .GetValueOrDefault(property)
                         .GetNonNullOrThrow();
 
-                if (TMember.Type != RMember.Type)
+                Type tMemberType = useUnderlyingTypeForNullables ? Nullable.GetUnderlyingType(TMember.Type) ?? TMember.Type : TMember.Type;
+                Type rMemberType = useUnderlyingTypeForNullables ? Nullable.GetUnderlyingType(RMember.Type) ?? RMember.Type : TMember.Type;
+
+                if (tMemberType != rMemberType)
                 {
                     return false;
                 }
