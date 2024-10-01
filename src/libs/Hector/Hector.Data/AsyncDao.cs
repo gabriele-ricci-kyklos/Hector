@@ -1,5 +1,4 @@
-﻿using Hector.Core;
-using Hector.Data.DataMapping;
+﻿using Hector.Data.DataMapping;
 using Hector.Data.Queries;
 using System;
 using System.Collections.Generic;
@@ -128,15 +127,6 @@ namespace Hector.Data
             }
         }
 
-        private bool IsStringDataType(string? dataTypeName)
-        {
-            if (dataTypeName.IsNullOrBlankString())
-            {
-                return false;
-            }
-            return dataTypeName.Contains("char", StringComparison.OrdinalIgnoreCase);
-        }
-
         private static void AddParameters(DbCommand command, SqlParameter[] parameters)
         {
             foreach (SqlParameter queryParam in parameters)
@@ -149,7 +139,7 @@ namespace Hector.Data
             }
         }
 
-        public void PrepareDbCommand(DbCommand command, IQueryBuilder builder, int? timeout = null)
+        public static void PrepareDbCommand(DbCommand command, IQueryBuilder builder, int? timeout = null)
         {
             command.CommandText = builder.Query;
             command.CommandTimeout = timeout ?? 30;
