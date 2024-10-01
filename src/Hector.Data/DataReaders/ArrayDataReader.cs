@@ -2,7 +2,7 @@
 
 namespace Hector.Data.DataReaders
 {
-    internal class ArrayDataReader<T> : ObjectDataReader
+    public class ArrayDataReader<T> : ObjectDataReader
     {
         private readonly TypeAccessor _typeAccessor;
         private readonly T[] _items;

@@ -1,8 +1,10 @@
 ﻿using Hector.Data.DataMapping;
+using Hector.Data.Entities;
 using Hector.Data.Queries;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Hector.Data
@@ -25,6 +27,8 @@ namespace Hector.Data
         Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
         Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
         Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
+
+        Task ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
     }
 
     public abstract class BaseAsyncDao : IAsyncDao
@@ -51,7 +55,7 @@ namespace Hector.Data
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            PrepareDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeout);
 
             try
             {
@@ -75,13 +79,18 @@ namespace Hector.Data
             }
         }
 
-        public async Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
+        public Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
         {
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            PrepareDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeout);
 
+            return ExecuteNonQueryAsync<T>(connection, command);
+        }
+
+        internal static async Task<int> ExecuteNonQueryAsync<T>(DbConnection connection, DbCommand command)
+        {
             try
             {
                 await connection.OpenAsync().ConfigureAwait(false);
@@ -99,7 +108,7 @@ namespace Hector.Data
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            PrepareDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeout);
 
             try
             {
@@ -127,6 +136,10 @@ namespace Hector.Data
             }
         }
 
+
+        public abstract Task ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
+
+
         private static void AddParameters(DbCommand command, SqlParameter[] parameters)
         {
             foreach (SqlParameter queryParam in parameters)
@@ -139,7 +152,7 @@ namespace Hector.Data
             }
         }
 
-        public static void PrepareDbCommand(DbCommand command, IQueryBuilder builder, int? timeout = null)
+        internal static void CreateDbCommand(DbCommand command, IQueryBuilder builder, int? timeout = null)
         {
             command.CommandText = builder.Query;
             command.CommandTimeout = timeout ?? 30;
