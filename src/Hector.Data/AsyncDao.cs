@@ -24,9 +24,9 @@ namespace Hector.Data
 
         IQueryBuilder NewQueryBuilder(string query = "");
 
-        Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
-        Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
-        Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null);
+        Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
+        Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
+        Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
 
         Task ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
     }
@@ -50,18 +50,18 @@ namespace Hector.Data
 
         public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper, Schema).SetQuery(query);
 
-        public async Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
+        public async Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
 
             try
             {
-                await connection.OpenAsync().ConfigureAwait(false);
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                object? result = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                object? result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
 
                 try
                 {
@@ -79,22 +79,22 @@ namespace Hector.Data
             }
         }
 
-        public Task<int> ExecuteNonQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
+        public Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
 
-            return ExecuteNonQueryAsync<T>(connection, command);
+            return ExecuteNonQueryAsync(connection, command, cancellationToken);
         }
 
-        internal static async Task<int> ExecuteNonQueryAsync<T>(DbConnection connection, DbCommand command)
+        internal static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
         {
             try
             {
-                await connection.OpenAsync().ConfigureAwait(false);
-                int result = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                int result = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 return result;
             }
             finally
@@ -103,25 +103,25 @@ namespace Hector.Data
             }
         }
 
-        public async Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int? timeout = null)
+        public async Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeout);
+            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
 
             try
             {
-                await connection.OpenAsync().ConfigureAwait(false);
-                using DbDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
                 List<T> results = [];
                 GenericDataRecordMapper<T> mapper = new();
 
                 while
                 (
-                    //!token.IsCancellationRequested &&
-                    (await reader.ReadAsync().ConfigureAwait(false))
+                    !cancellationToken.IsCancellationRequested
+                    && (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 )
                 {
                     T item = mapper.Build(reader);
@@ -152,10 +152,10 @@ namespace Hector.Data
             }
         }
 
-        internal static void CreateDbCommand(DbCommand command, IQueryBuilder builder, int? timeout = null)
+        internal static void CreateDbCommand(DbCommand command, IQueryBuilder builder, int timeoutInSeconds = 30)
         {
             command.CommandText = builder.Query;
-            command.CommandTimeout = timeout ?? 30;
+            command.CommandTimeout = timeoutInSeconds;
             AddParameters(command, builder.Parameters);
         }
     }
