@@ -1,16 +1,12 @@
 ﻿using FastMember;
-using Hector.Core;
 using Hector.Core.Reflection;
-using Hector.Data.Entities.Attributes;
+using Hector.Data.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Hector.Data.DataMapping
 {
-    record EntityPropertyInfo(Type Type, string PropertyName, string ColumnName);
-
     internal class EntityDataRecordMapper : BaseDataRecordMapper
     {
         private readonly TypeAccessor _typeAccessor;
@@ -27,8 +23,9 @@ namespace Hector.Data.DataMapping
                     .Create(_type, true);
 
             _propertiesMapping =
-                GetEntityPropertyInfoList()
-                .ToDictionary(x => x.ColumnName, x => x.PropertyName);
+                EntityHelper
+                    .GetEntityPropertyInfoList(_type)
+                    .ToDictionary(x => x.ColumnName, x => x.PropertyName);
 
             _typeConstructorDelegate = ObjectActivator.CreateILConstructorDelegate(_type);
         }
@@ -48,20 +45,6 @@ namespace Hector.Data.DataMapping
             }
 
             return resultObj;
-        }
-
-        private EntityPropertyInfo[] GetEntityPropertyInfoList()
-        {
-            PropertyInfo[] properties = _type.GetPropertyInfoList();
-            EntityPropertyInfo[] results = new EntityPropertyInfo[properties.Length];
-
-            for (int i = 0; i < properties.Length; ++i)
-            {
-                EntityPropertyInfoAttribute? attrib = properties[i].GetAttributeOfType<EntityPropertyInfoAttribute>(true);
-                results[i] = new EntityPropertyInfo(properties[i].PropertyType, properties[i].Name, attrib?.ColumnName ?? properties[i].Name);
-            }
-
-            return results.ToArray();
         }
     }
 }
