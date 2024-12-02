@@ -19,5 +19,7 @@
         string SequenceValue { get; }
 
         string EscapeFieldName(string fieldName);
+        string BuildParameterName(string name);
+        string BuildParameterName(int i);
     }
 }

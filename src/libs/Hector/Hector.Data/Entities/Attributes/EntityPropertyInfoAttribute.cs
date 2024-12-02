@@ -86,7 +86,7 @@ namespace Hector.Data.Entities.Attributes
 
         public string? Note { get; set; }
 
-        public int ColumnOrder { get; set; }
+        public short ColumnOrder { get; set; }
 
         public bool IsReadOnly { get; set; }
     }

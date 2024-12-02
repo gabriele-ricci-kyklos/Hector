@@ -3,6 +3,7 @@ using Hector.Data.Entities;
 using Hector.Data.Queries;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,12 +29,12 @@ namespace Hector.Data
         Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
 
-        Task ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
+        Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
     }
 
     public abstract class BaseAsyncDao : IAsyncDao
     {
-        private readonly IAsyncDaoHelper _daoHelper;
+        protected readonly IAsyncDaoHelper _daoHelper;
 
         public string ConnectionString { get; }
 
@@ -89,11 +90,15 @@ namespace Hector.Data
             return ExecuteNonQueryAsync(connection, command, cancellationToken);
         }
 
-        internal static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
+        public static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
         {
             try
             {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                if (connection.State == ConnectionState.Closed)
+                {
+                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                }
+
                 int result = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 return result;
             }
@@ -137,7 +142,7 @@ namespace Hector.Data
         }
 
 
-        public abstract Task ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
+        public abstract Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
 
 
         private static void AddParameters(DbCommand command, SqlParameter[] parameters)
@@ -145,7 +150,7 @@ namespace Hector.Data
             foreach (SqlParameter queryParam in parameters)
             {
                 DbParameter param = command.CreateParameter();
-                param.DbType = DbTypeMapper.MapTypeToDbType(queryParam.Type);
+                param.DbType = BaseAsyncDaoHelper.MapTypeToDbType(queryParam.Type);
                 param.ParameterName = queryParam.Name;
                 param.Value = queryParam.Value;
                 command.Parameters.Add(param);
@@ -158,5 +163,8 @@ namespace Hector.Data
             command.CommandTimeout = timeoutInSeconds;
             AddParameters(command, builder.Parameters);
         }
+
+        protected virtual string GetInsertIntoCommandText(string? schema, string tableName, string fieldNames, string paramNames) =>
+            $" INSERT INTO {schema}{tableName} ({fieldNames}) VALUES ({paramNames})";
     }
 }
