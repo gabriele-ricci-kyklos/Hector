@@ -29,7 +29,6 @@ namespace Hector.Data.Oracle
             //Ed eseguire con ExecuteNonQueryAsync
 
             Type type = typeof(T);
-            T firstItem = items.First();
 
             EntityPropertyInfo[] fieldInfoList =
                 EntityHelper
@@ -79,7 +78,8 @@ namespace Hector.Data.Oracle
                 paramNames.Add(param.ParameterName);
             }
 
-            string query = GetInsertIntoCommandText(Schema, firstItem.TableName, fieldNames, paramNames.StringJoin(", "));
+            string tableName = EntityHelper.GetEntityTableName(type).GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+            string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
             cmd.CommandText = query;
 
             OracleCommand oraCmd = (cmd as OracleCommand)!;

@@ -10,15 +10,18 @@ namespace Hector.Data.Entities
 
     public static class EntityHelper
     {
+        public static EntityPropertyInfo[] GetEntityPropertyInfoList<T>() =>
+            GetEntityPropertyInfoList(typeof(T));
+
         public static EntityPropertyInfo[] GetEntityPropertyInfoList(Type type)
         {
-            PropertyInfo[] properties = type.GetPropertyInfoList(["TableName", "IsView", "Alias"]);
+            PropertyInfo[] properties = type.GetPropertyInfoList();
             EntityPropertyInfo[] results = new EntityPropertyInfo[properties.Length];
 
             for (int i = 0; i < properties.Length; ++i)
             {
                 EntityPropertyInfoAttribute? attrib = properties[i].GetAttributeOfType<EntityPropertyInfoAttribute>(true);
-                if(attrib is not null)
+                if (attrib is not null)
                 {
                     results[i] =
                         new EntityPropertyInfo
@@ -34,5 +37,12 @@ namespace Hector.Data.Entities
 
             return results;
         }
+
+        public static string? GetEntityTableName<T>() => GetEntityTableName(typeof(T));
+
+        public static string? GetEntityTableName(Type type) =>
+            type
+                .GetAttributeOfType<EntityInfoAttribute>()
+                ?.TableName;
     }
 }
