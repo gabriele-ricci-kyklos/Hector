@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace APEEvo.Core.Support.DependencyInjection
+namespace Hector.Core.DependencyInjection
 {
     public static class OptionsDIExtensions
     {
@@ -29,6 +29,12 @@ namespace APEEvo.Core.Support.DependencyInjection
 
         public static IServiceCollection AddSingletonOption<T>(this IServiceCollection services, string? sectionName = null) where T : class =>
             services.AddSingleton(provider => provider.GetRequiredOption<T>(sectionName));
+
+        public static IServiceCollection AddSingletonOption<TService, TImplementation>(this IServiceCollection services, string? sectionName = null)
+            where TService : class
+            where TImplementation : class, TService =>
+            services
+                .AddSingleton(provider => provider.GetRequiredOption<TImplementation>(sectionName));
 
     }
 }
