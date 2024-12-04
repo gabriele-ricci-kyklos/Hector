@@ -20,7 +20,7 @@ namespace Hector.Data.SqlServer
 
         protected override DbConnection GetDbConnection() => new SqlConnection(ConnectionString);
 
-        public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             using DbConnection connection = GetDbConnection();
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -38,7 +38,7 @@ namespace Hector.Data.SqlServer
                 }
 
                 using SqlBulkCopy bcp = new(connection as SqlConnection);
-                bcp.DestinationTableName = EntityHelper.GetEntityTableName<T>().GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+                bcp.DestinationTableName = tableName ?? EntityHelper.GetEntityTableName<T>().GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
                 bcp.BatchSize = batchSize;
                 bcp.BulkCopyTimeout = timeoutInSeconds;
 
