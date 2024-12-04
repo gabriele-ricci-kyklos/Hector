@@ -1,4 +1,6 @@
-﻿using Hector.Data.DataReaders;
+﻿using Hector.Core;
+using Hector.Data.DataReaders;
+using Hector.Data.Entities;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -35,9 +37,8 @@ namespace Hector.Data.SqlServer
                     reader = new EnumerableDataReader<T>(items);
                 }
 
-                T firstItem = items.First();
                 using SqlBulkCopy bcp = new(connection as SqlConnection);
-                bcp.DestinationTableName = firstItem.TableName;
+                bcp.DestinationTableName = EntityHelper.GetEntityTableName<T>().GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
                 bcp.BatchSize = batchSize;
                 bcp.BulkCopyTimeout = timeoutInSeconds;
 
