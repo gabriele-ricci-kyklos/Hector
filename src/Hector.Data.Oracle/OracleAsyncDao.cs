@@ -21,7 +21,7 @@ namespace Hector.Data.Oracle
 
         protected override DbConnection GetDbConnection() => new OracleConnection(ConnectionString);
 
-        public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             //Va creato un query builder con una insert into con i nomi campi e parametri dell'entità
             //Va creata forse una logica common per realizzarlo
@@ -78,7 +78,7 @@ namespace Hector.Data.Oracle
                 paramNames.Add(param.ParameterName);
             }
 
-            string tableName = EntityHelper.GetEntityTableName(type).GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+            tableName ??= EntityHelper.GetEntityTableName(type).GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
             string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
             cmd.CommandText = query;
 
