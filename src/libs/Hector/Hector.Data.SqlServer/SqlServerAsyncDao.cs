@@ -43,13 +43,13 @@ namespace Hector.Data.SqlServer
                 bcp.BulkCopyTimeout = timeoutInSeconds;
 
                 await bcp.WriteToServerAsync(reader, cancellationToken).ConfigureAwait(false);
+
+                return bcp.RowsCopied;
             }
             finally
             {
                 await connection.CloseAsync().ConfigureAwait(false);
             }
-
-            return 0;
         }
     }
 }
