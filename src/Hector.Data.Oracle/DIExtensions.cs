@@ -1,4 +1,4 @@
-﻿using APEEvo.Core.Support.DependencyInjection;
+﻿using Hector.Core.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hector.Data.Oracle
