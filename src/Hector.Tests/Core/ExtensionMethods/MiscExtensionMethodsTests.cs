@@ -18,8 +18,11 @@ namespace Hector.Tests.Core.ExtensionMethods
         [Fact]
         public void TestToEnum()
         {
-            string s = "Network";
-            (s.ToEnum<DriveType>()?.GetType()).Should().Be(typeof(DriveType));
+            const string right = "Network";
+            const string wrong = "Networ";
+
+            right.ToEnum<DriveType>().Should().NotBeNull();
+            wrong.ToEnum<DriveType>().Should().BeNull();
         }
     }
 }
