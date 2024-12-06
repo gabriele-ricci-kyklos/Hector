@@ -1,14 +1,14 @@
 ﻿using Hector.Core.Reflection;
 using Hector.Data;
 using Hector.Data.DataReaders;
+using Hector.Data.Entities;
 using Hector.Data.Entities.Attributes;
 using Hector.Data.Oracle;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
-using Hector.Data.Entities;
 
 namespace Hector.Tests.Data
 {
