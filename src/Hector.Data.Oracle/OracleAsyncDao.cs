@@ -63,7 +63,7 @@ namespace Hector.Data.Oracle
             }
 
             using DbConnection dbConnection = GetDbConnection();
-            DbCommand cmd = dbConnection.CreateCommand();
+            using DbCommand cmd = dbConnection.CreateCommand();
             cmd.CommandType = CommandType.Text;
             cmd.CommandTimeout = timeoutInSeconds;
 
@@ -82,8 +82,7 @@ namespace Hector.Data.Oracle
             string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
             cmd.CommandText = query;
 
-            OracleCommand oraCmd = (cmd as OracleCommand)!;
-            oraCmd.ArrayBindCount = items.Count();
+            (cmd as OracleCommand)!.ArrayBindCount = items.Count();
 
             int affectedRecords = await ExecuteNonQueryAsync(dbConnection, cmd, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
