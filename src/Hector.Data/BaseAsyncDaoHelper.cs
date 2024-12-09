@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System;
+using Hector.Data.Entities;
 
 namespace Hector.Data
 {
@@ -111,5 +112,7 @@ namespace Hector.Data
 
         public virtual string BuildParameterName(string name) => $"{ParameterPrefix}P{name}";
         public virtual string BuildParameterName(int i) => $"{ParameterPrefix}P{i}";
+
+        public abstract (int? Precision, int? Scale) GetNumericPrecision(EntityPropertyInfo entityPropertyInfo);
     }
 }

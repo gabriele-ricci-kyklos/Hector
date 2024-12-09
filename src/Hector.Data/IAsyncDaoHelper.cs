@@ -1,4 +1,6 @@
-﻿namespace Hector.Data
+﻿using Hector.Data.Entities;
+
+namespace Hector.Data
 {
     public interface IAsyncDaoHelper
     {
@@ -21,5 +23,7 @@
         string EscapeFieldName(string fieldName);
         string BuildParameterName(string name);
         string BuildParameterName(int i);
+
+        (int? Precision, int? Scale) GetNumericPrecision(EntityPropertyInfo entityPropertyInfo);
     }
 }
