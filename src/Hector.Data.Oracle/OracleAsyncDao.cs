@@ -33,7 +33,7 @@ namespace Hector.Data.Oracle
             EntityPropertyInfo[] fieldInfoList =
                 EntityHelper
                     .GetEntityPropertyInfoList(type)
-                    .OrderBy(x => x.Order)
+                    .OrderBy(x => x.ColumnOrder)
                     .ToArray()
                     ;
 
@@ -91,5 +91,10 @@ namespace Hector.Data.Oracle
 
         protected override string GetInsertIntoCommandText(string? schema, string tableName, string fieldNames, string paramNames) =>
             $" INSERT /*+ APPEND */ INTO {schema}{tableName} ({fieldNames}) VALUES ({paramNames})";
+
+        public override Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

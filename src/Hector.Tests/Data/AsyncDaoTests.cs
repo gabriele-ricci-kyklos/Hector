@@ -94,6 +94,27 @@ namespace Hector.Tests.Data
         }
 
         [Fact]
+        public async Task TestSqlServerTableType()
+        {
+            AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
+
+            const string sql = @"
+DECLARE @tableType T_Divisions
+SELECT * from @tableType
+";
+
+            using SqlConnection conn = new SqlConnection(options.ConnectionString);
+            await conn.OpenAsync();
+
+            using SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandType = CommandType.Text;
+
+            SqlDataReader reader = await cmd.ExecuteReaderAsync(CommandBehavior.KeyInfo);
+            DataTable schemaTable = reader.GetSchemaTable();
+        }
+
+        [Fact]
         public async Task TestOracleBulkInsert()
         {
             using var conn = new OracleConnection("Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=172.16.10.53)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=rmxora)));User Id=RMX;Password=RMX;");

@@ -8,6 +8,7 @@ using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 namespace Hector.Data.SqlServer
 {
@@ -50,6 +51,11 @@ namespace Hector.Data.SqlServer
             {
                 await connection.CloseAsync().ConfigureAwait(false);
             }
+        }
+
+        public override Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }
