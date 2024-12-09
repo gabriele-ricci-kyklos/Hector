@@ -22,10 +22,16 @@ namespace Hector.Data.DataReaders
         protected ObjectDataReader(Type type)
         {
             Type = type;
-            Members = type.GetHierarchicalOrderedPropertyList().ToDictionary(x => x.Name);
-            IndexedMembers = Members.Select((x, i) => (x.Value, i)).ToDictionary(x => x.i, x => x.Value);
+            Members = GetMembers();
+            IndexedMembers = GetIndexedMembers();
             Names = Members.Keys.ToArray();
         }
+
+        protected virtual Dictionary<string, PropertyInfo> GetMembers() =>
+            Type.GetHierarchicalOrderedPropertyList().ToDictionary(x => x.Name);
+
+        protected virtual Dictionary<int, PropertyInfo> GetIndexedMembers() =>
+            Members.Select((x, i) => (x.Value, Index: i)).ToDictionary(x => x.Index, x => x.Value);
 
         public abstract bool Read();
         public abstract object GetValue(int i);
@@ -37,7 +43,7 @@ namespace Hector.Data.DataReaders
 
         public object this[string name] => Members[name];
 
-        public int Depth => throw new NotImplementedException();
+        public int Depth => throw new NotSupportedException();
 
         public bool IsClosed => Closed;
 
@@ -93,17 +99,23 @@ namespace Hector.Data.DataReaders
 
         public long GetInt64(int i) => (long)GetValue(i);
 
-        public string GetName(int i) => IndexedMembers[i].Name;
+        public virtual string GetName(int i) => IndexedMembers[i].Name;
 
-        public int GetOrdinal(string name) => Array.IndexOf(Names, name);
+        public virtual int GetOrdinal(string name) => Array.IndexOf(Names, name);
 
-        public DataTable? GetSchemaTable()
+        public virtual DataTable? GetSchemaTable()
         {
-            var dt = new DataTable();
-            foreach (var field in Members.Values)
+            DataTable dt = new();
+            dt.BeginLoadData();
+
+            foreach (PropertyInfo field in Members.Values)
             {
                 dt.Columns.Add(new DataColumn(field.Name, field.PropertyType.GetNonNullableType()));
             }
+
+            dt.EndLoadData();
+            dt.AcceptChanges();
+
             return dt;
         }
 
@@ -125,9 +137,6 @@ namespace Hector.Data.DataReaders
 
         public bool IsDBNull(int i) => GetValue(i) is null;
 
-        public bool NextResult()
-        {
-            throw new NotImplementedException();
-        }
+        public bool NextResult() => throw new NotSupportedException();
     }
 }

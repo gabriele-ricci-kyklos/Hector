@@ -6,10 +6,10 @@ namespace Hector.Data.DataReaders
 {
     public class EnumerableDataReader<T> : ObjectDataReader
     {
-        private readonly TypeAccessor _typeAccessor;
-        private readonly IEnumerator<T> _enumerator;
+        protected readonly TypeAccessor _typeAccessor;
+        protected readonly IEnumerator<T> _enumerator;
 
-        private object? _current;
+        protected object? _current;
 
         public EnumerableDataReader(IEnumerable<T> values)
             : base(typeof(T))
