@@ -8,20 +8,16 @@ using System.Reflection;
 
 namespace Hector.Data.DataReaders
 {
-    public class EntityDataReader<T> : EnumerableDataReader<T>
+    public class EntityDataReader : EnumerableDataReader
     {
         private readonly EntityPropertyInfo[] _propertyInfoList;
         private Func<EntityPropertyInfo, (int? Precision, int? Scale)> RetrieveNumberPrecision { get; }
         private readonly Dictionary<string, int> _ordinalDict = [];
 
-        public EntityDataReader(IEnumerable<T> values, Func<EntityPropertyInfo, (int? Precision, int? Scale)> retrieveNumberPrecision)
-            : base(values)
+        public EntityDataReader(Type type, System.Collections.IEnumerable values, Func<EntityPropertyInfo, (int? Precision, int? Scale)> retrieveNumberPrecision)
+            : base(type, values)
         {
-            _propertyInfoList =
-                EntityHelper
-                    .GetEntityPropertyInfoList<T>()
-                    .OrderBy(x => x.ColumnOrder)
-                    .ToArray();
+            _propertyInfoList = GetEntityPropertyInfoList(type);
 
             RetrieveNumberPrecision = retrieveNumberPrecision;
 
@@ -36,9 +32,15 @@ namespace Hector.Data.DataReaders
                     .ToDictionary(x => x.Name, x => x.Index);
         }
 
+        private static EntityPropertyInfo[] GetEntityPropertyInfoList(Type type) =>
+            EntityHelper
+                .GetEntityPropertyInfoList(type)
+                .OrderBy(x => x.ColumnOrder)
+                .ToArray();
+
         protected override Dictionary<string, PropertyInfo> GetMembers() =>
-            _propertyInfoList
-                .ToDictionary(x => x.PropertyName, x => x.PropertyInfo);
+            GetEntityPropertyInfoList(Type)
+                ?.ToDictionary(x => x.PropertyName, x => x.PropertyInfo) ?? [];
 
         public override int GetOrdinal(string name)
         {

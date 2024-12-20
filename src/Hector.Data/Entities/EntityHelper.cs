@@ -1,6 +1,8 @@
 ﻿using Hector.Core.Reflection;
 using Hector.Data.Entities.Attributes;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Hector.Data.Entities
@@ -17,7 +19,7 @@ namespace Hector.Data.Entities
         public static EntityPropertyInfo[] GetEntityPropertyInfoList(Type type)
         {
             PropertyInfo[] properties = type.GetPropertyInfoList();
-            EntityPropertyInfo[] results = new EntityPropertyInfo[properties.Length];
+            List<EntityPropertyInfo> results = [];
 
             for (int i = 0; i < properties.Length; ++i)
             {
@@ -27,24 +29,27 @@ namespace Hector.Data.Entities
                     continue;
                 }
 
-                results[i] =
-                    new EntityPropertyInfo
+                results
+                    .Add
                     (
-                        properties[i],
-                        attrib.DbType,
-                        properties[i].PropertyType,
-                        properties[i].Name,
-                        attrib.ColumnName ?? properties[i].Name,
-                        attrib.ColumnOrder,
-                        attrib.IsNullable,
-                        attrib.IsPrimaryKey,
-                        attrib.MaxLength,
-                        attrib.NumericPrecision,
-                        attrib.NumericScale
+                        new EntityPropertyInfo
+                        (
+                            properties[i],
+                            attrib.DbType,
+                            properties[i].PropertyType,
+                            properties[i].Name,
+                            attrib.ColumnName ?? properties[i].Name,
+                            attrib.ColumnOrder,
+                            attrib.IsNullable,
+                            attrib.IsPrimaryKey,
+                            attrib.MaxLength,
+                            attrib.NumericPrecision,
+                            attrib.NumericScale
+                        )
                     );
             }
 
-            return results;
+            return results.ToArray();
         }
 
         public static string? GetEntityTableName<T>() => GetEntityTableName(typeof(T));
@@ -53,5 +58,20 @@ namespace Hector.Data.Entities
             type
                 .GetAttributeOfType<EntityInfoAttribute>()
                 ?.TableName;
+
+        public static string[] GetPrimaryKeyFields(this Type entityType)
+        {
+            if (entityType is null)
+            {
+                return [];
+            }
+
+            return
+                GetEntityPropertyInfoList(entityType)
+                .Where(x => x.IsPrimaryKey)
+                .OrderBy(x => x.ColumnOrder)
+                .Select(x => x.ColumnName)
+                .ToArray();
+        }
     }
 }

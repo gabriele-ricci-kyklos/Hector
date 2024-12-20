@@ -1,4 +1,5 @@
-﻿using Hector.Core.Reflection;
+﻿using Hector.Core;
+using Hector.Core.Reflection;
 using Hector.Data;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;
@@ -6,17 +7,18 @@ using Hector.Data.Entities.Attributes;
 using Hector.Data.Oracle;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
-using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace Hector.Tests.Data
 {
     public class AsyncDaoTests
     {
+        [EntityInfo(Alias = "b", TableName = "a")]
         public class BulkItem : IBaseEntity
         {
-            [EntityPropertyInfo(ColumnName = "ID", DbType = PropertyDbType.Long, IsNullable = false, ColumnOrder = 10)]
+            [EntityPropertyInfo(ColumnName = "ID", DbType = PropertyDbType.Long, IsNullable = false, IsPrimaryKey = true, ColumnOrder = 10)]
             public long Id { get; set; }
 
             [EntityPropertyInfo(ColumnName = "CODE", DbType = PropertyDbType.String, IsNullable = false, ColumnOrder = 20)]
@@ -67,6 +69,19 @@ namespace Hector.Tests.Data
             public int ReasonID { get; set; }
         }
 
+        [EntityInfo(TableName = "Markets2")]
+        public class MarketDbItem : IBaseEntity
+        {
+            [EntityPropertyInfo(ColumnName = "MarketCode", DbType = PropertyDbType.String, IsNullable = false, MaxLength = 2, ColumnOrder = 10)]
+            public string? MarketCode { get; set; }
+
+            [EntityPropertyInfo(ColumnName = "MarketDescription", DbType = PropertyDbType.String, IsNullable = true, MaxLength = 100, ColumnOrder = 20)]
+            public string? MarketDescription { get; set; }
+
+            [EntityPropertyInfo(ColumnName = "MarketID", DbType = PropertyDbType.Integer, IsNullable = false, IsPrimaryKey = true, ColumnOrder = 30)]
+            public int MarketId { get; set; }
+        }
+
         [Fact]
         public async Task TestSqlServerAsyncDao()
         {
@@ -112,6 +127,20 @@ SELECT * from @tableType
 
             SqlDataReader reader = await cmd.ExecuteReaderAsync(CommandBehavior.KeyInfo);
             DataTable schemaTable = reader.GetSchemaTable();
+        }
+
+        [Fact]
+        public async Task TestSqlServerUpsert()
+        {
+            AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
+
+            SqlServerAsyncDaoHelper daoHelper = new();
+            SqlServerAsyncDao dao = new(options, daoHelper);
+
+            var items = await dao.ExecuteSelectQueryAsync<MarketDbItem>("select * from Markets2");
+            items.ForEach(x => x.MarketCode = "asd");
+
+            await dao.ExecuteUpsertAsync(items);
         }
 
         [Fact]

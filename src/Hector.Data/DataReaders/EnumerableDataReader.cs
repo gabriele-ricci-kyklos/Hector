@@ -1,22 +1,44 @@
 ﻿using FastMember;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Hector.Data.DataReaders
 {
-    public class EnumerableDataReader<T> : ObjectDataReader
+    public class EnumerableDataReader<T> : EnumerableDataReader, IEnumerable<T>
+    {
+        protected readonly IEnumerator<T> _typedEnumerator;
+
+        public EnumerableDataReader(IEnumerable<T> values)
+            : base(typeof(T), values)
+        {
+            _typedEnumerator = values.GetEnumerator();
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => _typedEnumerator;
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            _typedEnumerator.Dispose();
+        }
+    }
+
+    public class EnumerableDataReader : ObjectDataReader, IEnumerable
     {
         protected readonly TypeAccessor _typeAccessor;
-        protected readonly IEnumerator<T> _enumerator;
+        protected readonly IEnumerator _enumerator;
 
         protected object? _current;
 
-        public EnumerableDataReader(IEnumerable<T> values)
-            : base(typeof(T))
+        public EnumerableDataReader(Type type, IEnumerable values)
+            : base(type)
         {
             _typeAccessor = TypeAccessor.Create(Type);
             _enumerator = values.GetEnumerator();
         }
+
+        public IEnumerator GetEnumerator() => _enumerator;
 
         public override object GetValue(int i) => _typeAccessor[_current, IndexedMembers[i].Name];
 

@@ -108,7 +108,7 @@ namespace Hector.Data
             }
         }
 
-        public Task<T[]> ExecuteSelectQueryAsync<T>(string query, SqlParameter[] parameters, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+        public Task<T[]> ExecuteSelectQueryAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
             ExecuteSelectQueryAsync<T>(NewQueryBuilder(query, parameters), timeoutInSeconds, cancellationToken);
 
         public async Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
