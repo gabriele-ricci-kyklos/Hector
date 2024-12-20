@@ -23,7 +23,7 @@ namespace Hector.Data
 
         string Schema { get; }
 
-        IQueryBuilder NewQueryBuilder(string query = "");
+        IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[] parameters = null);
 
         Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
@@ -49,7 +49,7 @@ namespace Hector.Data
 
         protected abstract DbConnection GetDbConnection();
 
-        public IQueryBuilder NewQueryBuilder(string query = "") => new QueryBuilder(_daoHelper, Schema).SetQuery(query);
+        public IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null) => new QueryBuilder(_daoHelper, Schema, parameters).SetQuery(query);
 
         public async Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
@@ -107,6 +107,9 @@ namespace Hector.Data
                 await connection.CloseAsync().ConfigureAwait(false);
             }
         }
+
+        public Task<T[]> ExecuteSelectQueryAsync<T>(string query, SqlParameter[] parameters, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteSelectQueryAsync<T>(NewQueryBuilder(query, parameters), timeoutInSeconds, cancellationToken);
 
         public async Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {

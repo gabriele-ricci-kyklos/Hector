@@ -28,11 +28,11 @@ namespace Hector.Data.Queries
 
         private string _rawQuery = string.Empty;
 
-        public QueryBuilder(IAsyncDaoHelper asyncDaoHelper, string? schema)
+        internal QueryBuilder(IAsyncDaoHelper asyncDaoHelper, string? schema, SqlParameter[]? parameters = null)
         {
             _asyncDaoHelper = asyncDaoHelper;
             _schema = schema;
-            _parameters = new();
+            _parameters = parameters?.ToDictionary(x => x.Name) ?? [];
 
             _sqlFuncMapping =
                 new(StringComparer.OrdinalIgnoreCase)
