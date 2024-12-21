@@ -9,6 +9,7 @@ using System.Reflection;
 namespace Hector.Data.DataReaders
 {
     public class EntityDbDataReader<T> : EnumerableDbDataReader<T>
+        where T : IBaseEntity
     {
         private readonly EntityPropertyInfo[] _propertyInfoList;
         private Func<EntityPropertyInfo, (int? Precision, int? Scale)> RetrieveNumberPrecision { get; }
