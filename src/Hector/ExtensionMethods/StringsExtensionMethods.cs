@@ -37,5 +37,31 @@ namespace Hector.Core
 
             return s.ToLowerInvariant();
         }
+
+        public static string SafeSubstring(this string? s, int startPos, int len)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return string.Empty;
+            }
+            if (len < 0)
+            {
+                return string.Empty;
+            }
+            if (startPos < 0)
+            {
+                startPos = 0;
+            }
+            if (startPos > s.Length)
+            {
+                return string.Empty;
+            }
+            if (startPos + len >= s.Length)
+            {
+                return s.Substring(startPos);
+            }
+
+            return s.Substring(startPos, len);
+        }
     }
 }

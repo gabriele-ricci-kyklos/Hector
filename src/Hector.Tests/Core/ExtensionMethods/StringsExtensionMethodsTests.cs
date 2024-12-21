@@ -56,5 +56,16 @@ namespace Hector.Tests.Core.ExtensionMethods
         {
             s.ToNullIfBlank().Should().Be(null);
         }
+
+        [Theory]
+        [InlineData("", 1, 2)]
+        [InlineData(null, 1, 2)]
+        [InlineData("test", 1, -1)]
+        [InlineData("test", 8, 3)]
+        [InlineData("test", 3, 2)]
+        public void TestSafeSubstring(string? s, int startPos, int len)
+        {
+            s.SafeSubstring(startPos, len).Should().NotBeNull();
+        }
     }
 }
