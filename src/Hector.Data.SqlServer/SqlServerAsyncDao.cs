@@ -1,11 +1,11 @@
 ﻿using Hector.Core;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,14 +28,14 @@ namespace Hector.Data.SqlServer
 
             try
             {
-                IDataReader reader;
+                DbDataReader reader;
                 if (items is T[])
                 {
-                    reader = new ArrayDataReader<T>(items.ToArray());
+                    reader = new ArrayDbDataReader<T>(items.ToArray());
                 }
                 else
                 {
-                    reader = new EnumerableDataReader<T>(items);
+                    reader = new EnumerableDbDataReader<T>(items);
                 }
 
                 using SqlBulkCopy bcp = new(connection as SqlConnection);
@@ -45,7 +45,7 @@ namespace Hector.Data.SqlServer
 
                 await bcp.WriteToServerAsync(reader, cancellationToken).ConfigureAwait(false);
 
-                return 0;
+                return bcp.RowsCopied;
             }
             finally
             {

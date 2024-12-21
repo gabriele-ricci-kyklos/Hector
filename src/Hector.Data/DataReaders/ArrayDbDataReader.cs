@@ -1,4 +1,4 @@
-﻿namespace Hector.Data.DataReaders.Db
+﻿namespace Hector.Data.DataReaders
 {
     public class ArrayDbDataReader<T>(T[] values) : EnumerableDbDataReader<T>(values)
     {

@@ -10,7 +10,6 @@ using Hector.Data.SqlServer;
 using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
-using System.Data.SqlClient;
 
 namespace Hector.Tests.Data
 {
@@ -98,7 +97,7 @@ namespace Hector.Tests.Data
             var results = await dao.ExecuteSelectQueryAsync<Result>(queryBuilder);
 
             var properties = typeof(Result).GetHierarchicalOrderedPropertyList().Select(x => x.Name).ToArray();
-            var reader = new EnumerableDataReader<Result>(results);
+            var reader = new EnumerableDbDataReader<Result>(results);
 
             using var conn = new SqlConnection(options.ConnectionString);
             await conn.OpenAsync();
@@ -142,6 +141,19 @@ SELECT * from @tableType
             items.ForEach(x => x.MarketCode = "AS");
 
             await dao.ExecuteUpsertAsync(items);
+        }
+
+        [Fact]
+        public async Task TestSqlServerBulkInsert()
+        {
+            AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
+
+            SqlServerAsyncDaoHelper daoHelper = new();
+            SqlServerAsyncDao dao = new(options, daoHelper);
+
+            var items = await dao.ExecuteSelectQueryAsync<MarketDbItem>("select * from Markets3");
+
+            await dao.ExecuteBulkCopyAsync(items);
         }
 
         [Fact]

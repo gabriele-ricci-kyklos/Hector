@@ -12,6 +12,9 @@ using System.Reflection;
 
 namespace Hector.Data.DataReaders
 {
+    // credits: https://stackoverflow.com/a/2258448/4499267
+    // Later understood that a DataReader is always about enumeration and moved to DbDataReader
+
     public class EnumerableDbDataReader<T> : DbDataReader
     {
         protected readonly TypeAccessor _typeAccessor;
