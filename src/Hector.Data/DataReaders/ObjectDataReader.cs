@@ -1,4 +1,5 @@
-﻿using Hector.Core.Reflection;
+﻿using Hector.Core;
+using Hector.Core.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,46 +13,46 @@ namespace Hector.Data.DataReaders
 
     public abstract class ObjectDataReader : IDataReader
     {
-        protected readonly Type Type;
-        protected readonly Dictionary<string, PropertyInfo> Members = [];
-        protected readonly Dictionary<int, PropertyInfo> IndexedMembers = [];
-        protected readonly string[] Names = [];
+        protected readonly Type _type;
+        protected readonly Dictionary<string, PropertyInfo> _members = [];
+        protected readonly Dictionary<int, PropertyInfo> _indexedMembers = [];
+        protected readonly string[] _memberNames = [];
 
-        protected bool Closed = false;
+        protected bool __isClosed = false;
 
         protected ObjectDataReader(Type type)
         {
-            Type = type;
-            Members = GetMembers();
-            IndexedMembers = GetIndexedMembers();
-            Names = Members.Keys.ToArray();
+            _type = type;
+            _members = GetMembers();
+            _indexedMembers = GetIndexedMembers();
+            _memberNames = _members.Keys.ToArray();
         }
 
         protected virtual Dictionary<string, PropertyInfo> GetMembers() =>
-            Type.GetHierarchicalOrderedPropertyList().ToDictionary(x => x.Name);
+            _type.GetHierarchicalOrderedPropertyList().ToDictionary(x => x.Name);
 
         protected virtual Dictionary<int, PropertyInfo> GetIndexedMembers() =>
-            Members.Select((x, i) => (x.Value, Index: i)).ToDictionary(x => x.Index, x => x.Value);
+            _members.Select((x, i) => (x.Value, Index: i)).ToDictionary(x => x.Index, x => x.Value);
 
         public abstract bool Read();
         public abstract object GetValue(int i);
 
 
-        public int FieldCount => Members.Count;
+        public int FieldCount => _members.Count;
 
         public object this[int i] => GetValue(i);
 
-        public object this[string name] => Members[name];
+        public object this[string name] => _members[name];
 
         public int Depth => throw new NotSupportedException();
 
-        public bool IsClosed => Closed;
+        public bool IsClosed => __isClosed;
 
         public int RecordsAffected => -1;
 
 
 
-        public void Close() => Closed = true;
+        public void Close() => __isClosed = true;
 
         public virtual void Dispose()
         {
@@ -63,14 +64,37 @@ namespace Hector.Data.DataReaders
 
         public long GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length)
         {
-            throw new NotImplementedException();
+            if (GetValue(i) is not byte[] value)
+            {
+                return 0L;
+            }
+
+            byte[] data =
+                value
+                .Skip((int)fieldOffset)
+                .Take(length)
+                .ToArray();
+
+            Array.Copy(data, 0, buffer ?? [], bufferoffset, data.Length);
+
+            return data.Length;
         }
 
         public char GetChar(int i) => (char)GetValue(i);
 
         public long GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length)
         {
-            throw new NotImplementedException();
+            string value = GetString(i);
+            if (value is null)
+            {
+                return 0L;
+            }
+
+            string subStr = value.SafeSubstring((int)fieldoffset, Math.Min(length, value.Length));
+
+            Array.Copy(subStr.ToCharArray(), 0, buffer ?? [], bufferoffset, subStr.Length);
+
+            return subStr.Length;
         }
 
         public IDataReader GetData(int i)
@@ -87,7 +111,7 @@ namespace Hector.Data.DataReaders
         public double GetDouble(int i) => (double)GetValue(i);
 
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
-        public Type GetFieldType(int i) => IndexedMembers[i].PropertyType;
+        public Type GetFieldType(int i) => _indexedMembers[i].PropertyType;
 
         public float GetFloat(int i) => (float)GetValue(i);
 
@@ -99,16 +123,16 @@ namespace Hector.Data.DataReaders
 
         public long GetInt64(int i) => (long)GetValue(i);
 
-        public virtual string GetName(int i) => IndexedMembers[i].Name;
+        public virtual string GetName(int i) => _indexedMembers[i].Name;
 
-        public virtual int GetOrdinal(string name) => Array.IndexOf(Names, name);
+        public virtual int GetOrdinal(string name) => Array.IndexOf(_memberNames, name);
 
         public virtual DataTable? GetSchemaTable()
         {
             DataTable dt = new();
             dt.BeginLoadData();
 
-            foreach (PropertyInfo field in Members.Values)
+            foreach (PropertyInfo field in _members.Values)
             {
                 dt.Columns.Add(new DataColumn(field.Name, field.PropertyType.GetNonNullableType()));
             }
@@ -124,7 +148,7 @@ namespace Hector.Data.DataReaders
         public int GetValues(object[] values)
         {
             int i = 0;
-            for (; i < Members.Count; i++)
+            for (; i < _members.Count; i++)
             {
                 if (values.Length <= i)
                 {

@@ -8,16 +8,16 @@ using System.Reflection;
 
 namespace Hector.Data.DataReaders
 {
-    public class EntityDataReader : EnumerableDataReader
+    public class EntityDbDataReader<T> : EnumerableDbDataReader<T>
     {
         private readonly EntityPropertyInfo[] _propertyInfoList;
         private Func<EntityPropertyInfo, (int? Precision, int? Scale)> RetrieveNumberPrecision { get; }
         private readonly Dictionary<string, int> _ordinalDict = [];
 
-        public EntityDataReader(Type type, System.Collections.IEnumerable values, Func<EntityPropertyInfo, (int? Precision, int? Scale)> retrieveNumberPrecision)
-            : base(type, values)
+        public EntityDbDataReader(IEnumerable<T> values, Func<EntityPropertyInfo, (int? Precision, int? Scale)> retrieveNumberPrecision)
+            : base(values)
         {
-            _propertyInfoList = GetEntityPropertyInfoList(type);
+            _propertyInfoList = GetEntityPropertyInfoList(_type);
 
             RetrieveNumberPrecision = retrieveNumberPrecision;
 
@@ -39,7 +39,7 @@ namespace Hector.Data.DataReaders
                 .ToArray();
 
         protected override Dictionary<string, PropertyInfo> GetMembers() =>
-            GetEntityPropertyInfoList(Type)
+            GetEntityPropertyInfoList(_type)
                 ?.ToDictionary(x => x.PropertyName, x => x.PropertyInfo) ?? [];
 
         public override int GetOrdinal(string name)

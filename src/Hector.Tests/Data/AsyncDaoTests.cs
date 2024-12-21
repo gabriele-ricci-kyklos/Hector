@@ -7,6 +7,7 @@ using Hector.Data.Entities.Attributes;
 using Hector.Data.Oracle;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
+using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Data.SqlClient;
@@ -138,7 +139,7 @@ SELECT * from @tableType
             SqlServerAsyncDao dao = new(options, daoHelper);
 
             var items = await dao.ExecuteSelectQueryAsync<MarketDbItem>("select * from Markets2");
-            items.ForEach(x => x.MarketCode = "asd");
+            items.ForEach(x => x.MarketCode = "AS");
 
             await dao.ExecuteUpsertAsync(items);
         }

@@ -13,11 +13,11 @@ namespace Hector.Data.DataReaders
         public ArrayDataReader(T[] values)
             : base(typeof(T))
         {
-            _typeAccessor = TypeAccessor.Create(Type);
+            _typeAccessor = TypeAccessor.Create(_type);
             _items = values;
         }
 
-        public override object GetValue(int i) => _typeAccessor[_current, IndexedMembers[i].Name];
+        public override object GetValue(int i) => _typeAccessor[_current, _indexedMembers[i].Name];
 
         public override bool Read()
         {

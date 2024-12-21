@@ -83,7 +83,7 @@ namespace Hector.Data.SqlServer
             string updateText =
                 "UPDATE SET "
                 + fieldNames
-                    .Select(x => $"src.{x} = dst.{x}")
+                    .Select(x => $"dst.{x} = src.{x}")
                     .StringJoin(", ");
 
             string insertText =
@@ -102,7 +102,7 @@ namespace Hector.Data.SqlServer
                 WHEN NOT MATCHED BY TARGET THEN
                     {insertText};";
 
-            using EntityDataReader dataReader = new(type, items, _daoHelper.GetNumericPrecision);
+            using EntityDbDataReader<T> dataReader = new(items, _daoHelper.GetNumericPrecision);
 
             using DbConnection dbConnection = GetDbConnection();
             using DbCommand cmd = dbConnection.CreateCommand();

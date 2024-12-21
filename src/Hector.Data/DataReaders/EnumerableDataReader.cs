@@ -34,18 +34,18 @@ namespace Hector.Data.DataReaders
         public EnumerableDataReader(Type type, IEnumerable values)
             : base(type)
         {
-            _typeAccessor = TypeAccessor.Create(Type);
+            _typeAccessor = TypeAccessor.Create(_type);
             _enumerator = values.GetEnumerator();
         }
 
         public IEnumerator GetEnumerator() => _enumerator;
 
-        public override object GetValue(int i) => _typeAccessor[_current, IndexedMembers[i].Name];
+        public override object GetValue(int i) => _typeAccessor[_current, _indexedMembers[i].Name];
 
         public override bool Read()
         {
             bool returnValue = _enumerator.MoveNext();
-            _current = returnValue ? _enumerator.Current : Type.IsValueType ? Activator.CreateInstance(Type) : null;
+            _current = returnValue ? _enumerator.Current : _type.IsValueType ? Activator.CreateInstance(_type) : null;
             return returnValue;
         }
     }
