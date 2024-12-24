@@ -1,33 +1,19 @@
 ﻿namespace Hector.Core.DependencyInjection
 {
-    public class TypedWrapper<T>
+    public class TypedWrapper<T>(T value)
     {
-        public T Value { get; }
-
-        public TypedWrapper(T value)
-        {
-            Value = value;
-        }
+        public T Value { get; } = value;
     }
 
-    public class TypedWrapper<T1, T2> : TypedWrapper<T1>
+    public class TypedWrapper<T1, T2>(T1 value) : TypedWrapper<T1>(value)
     {
-        public TypedWrapper(T1 value) : base(value)
-        {
-        }
     }
 
-    public class TypedWrapper<T1, T2, T3> : TypedWrapper<T1>
+    public class TypedWrapper<T1, T2, T3>(T1 value) : TypedWrapper<T1>(value)
     {
-        public TypedWrapper(T1 value) : base(value)
-        {
-        }
     }
 
-    public class TypedWrapper<T1, T2, T3, T4> : TypedWrapper<T1>
+    public class TypedWrapper<T1, T2, T3, T4>(T1 value) : TypedWrapper<T1>(value)
     {
-        public TypedWrapper(T1 value) : base(value)
-        {
-        }
     }
 }
