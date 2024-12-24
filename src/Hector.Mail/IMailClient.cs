@@ -1,4 +1,6 @@
-﻿namespace Hector.Mail
+﻿using System.Threading.Tasks;
+
+namespace Hector.Mail
 {
     public interface IMailClient
     {

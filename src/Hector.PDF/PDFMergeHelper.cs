@@ -1,5 +1,9 @@
 ﻿using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Hector.PDF
 {
