@@ -164,5 +164,28 @@ namespace Hector
 
             return newMap;
         }
+
+#if NETSTANDARD2_0
+
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T>? comparer = null) =>
+            new(source, comparer);
+
+        public static TValue? GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key) =>
+            dictionary.GetValueOrDefault(key, default!);
+
+        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue) =>
+            dictionary
+                .GetNonNullOrThrow(nameof(dictionary))
+                .TryGetValue(key, out TValue? value)
+            ? value
+            : defaultValue;
+
+        public static T GetItemByIndex<T>(this ArraySegment<T> segment, int index) =>
+            GetItemByIndex<ArraySegment<T>, T>(segment, index);
+
+        private static T GetItemByIndex<TList, T>(TList list, int index) where TList : struct, IReadOnlyList<T> =>
+            list[index];
+
+#endif
     }
 }

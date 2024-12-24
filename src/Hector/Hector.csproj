@@ -1,9 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <LangVersion>12</LangVersion>
+    <LangVersion>13</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CSharp9Support\IsExternalInit.cs" Link="IsExternalInit.cs" />
+    <Compile Include="..\CSharp9Support\NullableExtensions.cs" Link="NullableExtensions.cs" />
+    <Compile Include="..\CSharp9Support\Range.cs" Link="Range.cs" />
+  </ItemGroup>
 
 </Project>

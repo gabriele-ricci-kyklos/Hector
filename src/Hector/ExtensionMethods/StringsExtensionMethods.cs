@@ -9,7 +9,6 @@ namespace Hector
         public static bool IsNullOrBlankString([NotNullWhen(false)] this string? s) => string.IsNullOrWhiteSpace(s);
         public static bool IsNotNullAndNotBlank([NotNullWhen(true)] this string? s) => !string.IsNullOrWhiteSpace(s);
         public static string StringJoin<T>(this IEnumerable<T> values, string separator) => string.Join(separator, values);
-        public static string StringJoin<T>(this IEnumerable<T> values, char separator) => string.Join(separator, values);
         public static string Shuffle(this string str)
         {
             char[] strCh = str.ToCharArray();

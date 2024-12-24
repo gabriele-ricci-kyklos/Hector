@@ -129,12 +129,12 @@ namespace Hector.Compression
             ArraySegment<byte> slice = new(data, pos, data.Length - pos);
             for (int i = 0; i < slice.Count; ++i)
             {
-                if (slice[i] == _referencePrefix)
+                if (slice.GetItemByIndex(i) == _referencePrefix)
                 {
                     compressed.Add(_referencePrefix);
                 }
 
-                compressed.Add(slice[i]);
+                compressed.Add(slice.GetItemByIndex(i));
             }
 
             return compressed.ToArray();
@@ -221,7 +221,7 @@ namespace Hector.Compression
             {
                 value *= _referenceIntBase;
 
-                int charCode = data[i];
+                int charCode = data.GetItemByIndex(i);
 
                 if ((charCode >= _referenceIntFloorCode) && (charCode <= _referenceIntCeilCode))
                 {
