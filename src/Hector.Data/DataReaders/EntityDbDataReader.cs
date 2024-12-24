@@ -1,4 +1,4 @@
-﻿using Hector.Core.Reflection;
+﻿using Hector.Reflection;
 using Hector.Data.Entities;
 using System;
 using System.Collections.Generic;

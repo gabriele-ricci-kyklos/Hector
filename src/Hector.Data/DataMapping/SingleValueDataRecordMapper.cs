@@ -1,4 +1,4 @@
-﻿using Hector.Core;
+﻿using Hector;
 using System;
 
 namespace Hector.Data.DataMapping

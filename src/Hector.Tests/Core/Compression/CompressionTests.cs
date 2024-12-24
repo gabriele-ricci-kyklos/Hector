@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using Hector.Core.Compression;
+using Hector.Compression;
 
 namespace Hector.Tests.Core.Compression
 {

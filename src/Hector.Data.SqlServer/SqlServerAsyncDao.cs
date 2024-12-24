@@ -1,4 +1,4 @@
-﻿using Hector.Core;
+﻿using Hector;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;
 using Microsoft.Data.SqlClient;

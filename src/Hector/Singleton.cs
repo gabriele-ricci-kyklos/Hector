@@ -1,4 +1,4 @@
-﻿namespace Hector.Core
+﻿namespace Hector
 {
     // credits: C# in Depth by Jon Skeet - http://csharpindepth.com/Articles/General/Singleton.aspx
     public sealed class Singleton<T> where T : class, new()

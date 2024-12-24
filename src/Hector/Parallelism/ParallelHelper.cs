@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hector.Core.Parallelism
+namespace Hector.Parallelism
 {
     public class ParallelHelper
     {

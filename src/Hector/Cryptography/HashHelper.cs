@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Hector.Core.Cryptography
+namespace Hector.Cryptography
 {
     public static class HashHelper
     {

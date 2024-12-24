@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Hector.Core.Compression
+namespace Hector.Compression
 {
     public static class GZipHelper
     {

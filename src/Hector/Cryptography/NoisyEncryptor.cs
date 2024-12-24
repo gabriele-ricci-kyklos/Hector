@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Hector.Core.Cryptography
+namespace Hector.Cryptography
 {
     public class NoisyEncryptor
     {

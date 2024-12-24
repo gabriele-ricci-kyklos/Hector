@@ -1,9 +1,9 @@
-﻿using Hector.Core;
+﻿using Hector;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Hector.Core.DependencyInjection
+namespace Hector.DependencyInjection
 {
     public static class OptionsDIExtensions
     {

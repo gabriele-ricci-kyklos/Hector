@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Hector.Core.Reflection
+namespace Hector.Reflection
 {
     //credits: https://stackoverflow.com/questions/4432026/activator-createinstance-performance-alternative
     //credits: https://stackoverflow.com/questions/26477540/creating-a-dynamicmethod-to-invoke-a-constructor

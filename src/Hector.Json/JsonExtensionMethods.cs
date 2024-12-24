@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Hector.Core;
+using Hector;
 
 namespace Hector.Json
 {

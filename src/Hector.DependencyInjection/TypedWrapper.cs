@@ -1,4 +1,4 @@
-﻿namespace Hector.Core.DependencyInjection
+﻿namespace Hector.DependencyInjection
 {
     public class TypedWrapper<T>(T value)
     {

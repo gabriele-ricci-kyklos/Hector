@@ -2,7 +2,7 @@
 using MimeKit;
 using System.Net.Mail;
 
-namespace Hector.Core.Mail
+namespace Hector.Mail
 {
     public record SMTPOptions(string Host, int Port, string Username, string Password, string Sender, bool EnableSSL)
     {

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class BitArrayExtensionMethods
     {

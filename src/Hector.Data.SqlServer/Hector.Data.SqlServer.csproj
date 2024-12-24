@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-      <ProjectReference Include="..\Hector.Core.DependencyInjection\Hector.Core.DependencyInjection.csproj" />
+      <ProjectReference Include="..\Hector.DependencyInjection\Hector.DependencyInjection.csproj" />
       <ProjectReference Include="..\Hector.Data\Hector.Data.csproj" />
   </ItemGroup>
 

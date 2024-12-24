@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class AssertsExtensionMethods
     {

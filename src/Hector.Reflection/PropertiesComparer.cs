@@ -1,6 +1,6 @@
 ﻿using FastMember;
 
-namespace Hector.Core.Reflection
+namespace Hector.Reflection
 {
     public static class PropertiesComparer
     {

@@ -1,7 +1,7 @@
 ﻿using FastMember;
 using FluentAssertions;
-using Hector.Core;
-using Hector.Core.Reflection;
+using Hector;
+using Hector.Reflection;
 using System.Data;
 using System.Diagnostics;
 

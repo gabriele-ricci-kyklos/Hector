@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Hector.Core.Collections
+namespace Hector.Collections
 {
     public class Bictionary<TKey, TValue>(IDictionary<TKey, TValue> data)
         where TKey : notnull

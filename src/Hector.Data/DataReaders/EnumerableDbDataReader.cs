@@ -1,6 +1,6 @@
 ﻿using FastMember;
-using Hector.Core;
-using Hector.Core.Reflection;
+using Hector;
+using Hector.Reflection;
 using System;
 using System.Collections;
 using System.Collections.Generic;

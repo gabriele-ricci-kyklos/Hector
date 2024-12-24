@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class TimeExtensionMethods
     {

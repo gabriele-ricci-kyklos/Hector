@@ -1,4 +1,4 @@
-﻿namespace Hector.Core.Mail
+﻿namespace Hector.Mail
 {
     public interface IMailClient
     {

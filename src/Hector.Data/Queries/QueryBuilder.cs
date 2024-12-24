@@ -1,4 +1,4 @@
-﻿using Hector.Core;
+﻿using Hector;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,7 +1,7 @@
 ﻿using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
 
-namespace Hector.Core.PDF
+namespace Hector.PDF
 {
     public static class PDFMergeHelper
     {

@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
-using Hector.Core.Compression;
-using Hector.Core.Cryptography;
+using Hector.Compression;
+using Hector.Cryptography;
 using System.Text;
 
 namespace Hector.Tests.Core.Cryptography

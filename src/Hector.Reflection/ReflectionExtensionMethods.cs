@@ -2,7 +2,7 @@
 using System.Data;
 using System.Reflection;
 
-namespace Hector.Core.Reflection
+namespace Hector.Reflection
 {
     public static class ReflectionExtensionMethods
     {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Hector.Core.Mail
+namespace Hector.Mail
 {
     public static class DIExtensions
     {

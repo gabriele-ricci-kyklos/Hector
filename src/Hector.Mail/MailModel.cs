@@ -1,7 +1,7 @@
 ﻿using System.Net.Mail;
 using System.Text;
 
-namespace Hector.Core.Mail
+namespace Hector.Mail
 {
     public class MailModel : IDisposable
     {

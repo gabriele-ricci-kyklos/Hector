@@ -1,5 +1,5 @@
 ﻿using FastMember;
-using Hector.Core;
+using Hector;
 using Hector.Data.Entities;
 using Oracle.ManagedDataAccess.Client;
 using System;

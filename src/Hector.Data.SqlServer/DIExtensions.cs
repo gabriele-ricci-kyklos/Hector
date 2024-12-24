@@ -1,4 +1,4 @@
-﻿using Hector.Core.DependencyInjection;
+﻿using Hector.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hector.Data.SqlServer

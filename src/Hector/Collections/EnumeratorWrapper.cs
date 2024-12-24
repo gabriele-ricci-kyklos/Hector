@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Hector.Core.Collections
+namespace Hector.Collections
 {
     public class EnumeratorWrapper<T> : IDisposable
     {

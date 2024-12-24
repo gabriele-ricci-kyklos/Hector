@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class IOExtensionMethods
     {

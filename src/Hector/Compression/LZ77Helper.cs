@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Hector.Core.Compression
+namespace Hector.Compression
 {
     public class LZ77Helper
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class DictionaryExtensionMethods
     {

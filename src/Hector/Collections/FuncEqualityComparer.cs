@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Hector.Core.Collections
+namespace Hector.Collections
 {
     public class FuncEqualityComparer<T> : IEqualityComparer<T>
     {

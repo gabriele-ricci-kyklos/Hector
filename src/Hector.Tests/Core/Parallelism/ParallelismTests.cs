@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using Hector.Core.Parallelism;
+using Hector.Parallelism;
 
 namespace Hector.Tests.Core.Parallelism
 {

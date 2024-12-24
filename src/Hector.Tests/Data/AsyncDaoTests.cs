@@ -1,5 +1,5 @@
-﻿using Hector.Core;
-using Hector.Core.Reflection;
+﻿using Hector;
+using Hector.Reflection;
 using Hector.Data;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;

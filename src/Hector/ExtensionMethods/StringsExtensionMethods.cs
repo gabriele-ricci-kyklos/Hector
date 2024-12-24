@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Hector.Core
+namespace Hector
 {
     public static class StringsExtensionMethods
     {
