@@ -51,7 +51,7 @@ namespace Hector
             {
                 startPos = 0;
             }
-            if (startPos > s.Length)
+            if (startPos > s!.Length)
             {
                 return string.Empty;
             }

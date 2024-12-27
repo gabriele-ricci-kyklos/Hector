@@ -63,8 +63,8 @@ namespace Hector.Data.DataReaders
                 DataRow row = dt.NewRow();
                 EntityPropertyInfo fieldAttribute = _propertyInfoList[i];
 
-                row.SetField(dt.ColumnNameColumn, fieldAttribute.PropertyName);
-                row.SetField(dt.ColumnOrdinalColumn, i);
+                row[dt.ColumnNameColumn] = fieldAttribute.PropertyName;
+                row[dt.ColumnOrdinalColumn] = i;
 
                 bool isNullable =
                     fieldAttribute
@@ -79,18 +79,18 @@ namespace Hector.Data.DataReaders
                             .IsClass
                     );
 
-                row.SetField(dt.AllowDBNullColumn, isNullable);
-                row.SetField(dt.IsKeyColumn, fieldAttribute?.IsPrimaryKey ?? false);
-                row.SetField(dt.DataTypeColumn, GetFieldType(i));
-                row.SetField(dt.ColumnSizeColumn, fieldAttribute?.MaxLength ?? -1);
+                row[dt.AllowDBNullColumn] = isNullable;
+                row[dt.IsKeyColumn] = fieldAttribute?.IsPrimaryKey ?? false;
+                row[dt.DataTypeColumn] = GetFieldType(i);
+                row[dt.ColumnSizeColumn] = fieldAttribute?.MaxLength ?? -1;
 
                 var (precision, scale) =
                     fieldAttribute is null ?
                     (null, null)
                     : RetrieveNumberPrecision(fieldAttribute);
 
-                row.SetField(dt.NumericPrecisionColumn, precision);
-                row.SetField(dt.NumericScaleColumn, scale);
+                row[dt.NumericPrecisionColumn] = precision;
+                row[dt.NumericScaleColumn] = scale;
 
                 dt.Rows.Add(row);
             }

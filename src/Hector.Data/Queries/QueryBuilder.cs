@@ -160,7 +160,7 @@ namespace Hector.Data.Queries
             string[] funcArgs =
                 tokens[1]
                     .Remove(tokens[1].Length - 1)
-                    .Split(",")
+                    .Split(',')
                     .Select(x => x.Trim())
                     .ToArray();
 

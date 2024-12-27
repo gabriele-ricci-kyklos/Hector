@@ -49,7 +49,7 @@ namespace Hector.Data.SqlServer
             }
             finally
             {
-                await connection.CloseAsync().ConfigureAwait(false);
+                connection.Close();
             }
         }
 

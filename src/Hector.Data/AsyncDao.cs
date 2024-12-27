@@ -23,7 +23,7 @@ namespace Hector.Data
 
         string Schema { get; }
 
-        IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[] parameters = null);
+        IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null);
 
         Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
@@ -76,7 +76,7 @@ namespace Hector.Data
             }
             finally
             {
-                await connection.CloseAsync().ConfigureAwait(false);
+                connection.Close();
             }
         }
 
@@ -104,7 +104,7 @@ namespace Hector.Data
             }
             finally
             {
-                await connection.CloseAsync().ConfigureAwait(false);
+                connection.Close();
             }
         }
 
@@ -140,7 +140,7 @@ namespace Hector.Data
             }
             finally
             {
-                await connection.CloseAsync().ConfigureAwait(false);
+                connection.Close();
             }
         }
 

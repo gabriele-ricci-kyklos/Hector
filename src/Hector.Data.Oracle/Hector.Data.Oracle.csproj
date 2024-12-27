@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
   </PropertyGroup>
@@ -9,7 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" Condition="'$(TargetFramework)' == 'netstandard2.1'"/>
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.260" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
   </ItemGroup>
 
   <ItemGroup>
