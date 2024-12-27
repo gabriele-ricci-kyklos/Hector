@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hector.Parallelism
 {
@@ -11,7 +10,7 @@ namespace Hector.Parallelism
         internal static Task Parallel_ForEachAsync<TSource>(IEnumerable<TSource> source, ParallelOptions parallelOptions, Func<TSource, CancellationToken, Task> body)
         {
 #if NET5_0_OR_GREATER
-            return System.Threading.Tasks.Parallel.ForEachAsync(source, parallelOptions, (x, c) => new ValueTask(body(x, c)));
+            return Parallel.ForEachAsync(source, parallelOptions, (x, c) => new ValueTask(body(x, c)));
 #else
             return Parallel_ForEachAsync_NetStandard(source, parallelOptions, body);
 #endif

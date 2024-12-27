@@ -16,7 +16,7 @@ namespace Hector.Parallelism
             Func<TKey, ConcurrentDictionary<TKey, TResult[]>, CancellationToken, Task> action =
                 async (x, y, z) =>
                 {
-                    var res = await actionTask(x, z);
+                    TResult[] res = await actionTask(x, z);
                     y.TryAdd(x, res);
                 };
 

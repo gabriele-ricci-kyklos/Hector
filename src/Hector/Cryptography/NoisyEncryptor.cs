@@ -77,9 +77,9 @@ namespace Hector.Cryptography
 
         private string Decode()
         {
-            HashSet<char> charsInTheMiddle = _charsInTheMiddle.ToHashSet();
-            HashSet<char> charsForZero = _charsForZero.ToHashSet();
-            HashSet<char> charsForOne = _charsForOne.ToHashSet();
+            HashSet<char> charsInTheMiddle = [.. _charsInTheMiddle];
+            HashSet<char> charsForZero = [.. _charsForZero];
+            HashSet<char> charsForOne = [.. _charsForOne];
 
             StringBuilder buffer = new(String.Length);
 
