@@ -51,6 +51,41 @@ namespace Hector.Tests.Core.Collections
 
             enumeratorWrapper.SafeNextValue.Should().Be(0);
             enumeratorWrapper.Invoking(x => x.NextValue).Should().Throw<IndexOutOfRangeException>();
+
+            using EnumeratorWrapper<int> enumeratorWrapper2 = new(data);
+            enumeratorWrapper2.GetRangeValues(12)
+                .Should().NotBeNullOrEmpty()
+                .And.HaveCount(9)
+                .And.BeInAscendingOrder();
         }
+
+        [Fact]
+        public void TestFuncEqualityComparer()
+        {
+            Entity[] data =
+            [
+                new Entity
+                {
+                    Dosage = 1,
+                    Drug = "a"
+                },
+                new Entity
+                {
+                    Dosage = 1,
+                    Drug = "b"
+                }
+            ];
+
+            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Drug!)).Should().HaveCount(2);
+            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Dosage)).Should().HaveCount(1);
+        }
+    }
+
+    public class Entity
+    {
+        public int Dosage { get; set; }
+        public string? Drug { get; set; }
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
     }
 }
