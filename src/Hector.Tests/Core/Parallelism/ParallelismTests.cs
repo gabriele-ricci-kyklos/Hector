@@ -26,5 +26,27 @@ namespace Hector.Tests.Core.Parallelism
             data["one"].Should().Be(500);
             data["two"].Should().Be(500);
         }
+
+        [Fact]
+        public async Task TestDoInParallelColletingResultsAsync()
+        {
+            List<int> models = [1, 2, 3];
+
+            Dictionary<int, int[]> results =
+                await ParallelHelper
+                    .DoInParallelColletingResultsAsync
+                    (
+                        models.ToArray(),
+                        (a, b) =>
+                        {
+                            int[] r = [1, 2];
+                            return Task.FromResult(r);
+                        }
+                    );
+
+            results.Should().NotBeNullOrEmpty()
+                .And.HaveCount(3)
+                .And.AllSatisfy(x => x.Value.Should().NotBeNullOrEmpty().And.HaveCount(2));
+        }
     }
 }
