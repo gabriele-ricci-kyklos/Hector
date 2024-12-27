@@ -25,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Json", "Hector.Json\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Tests.NetFramework", "Hector.Tests.NetFramework\Hector.Tests.NetFramework.csproj", "{6B4EC4EB-ADF1-4EEF-BF81-430E34FF08DB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{02C5F1F6-81D1-48E5-AFAE-9F593E7F3583}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{949AEFDF-4834-4597-A739-4766DD10B1A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +82,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DF55CF1C-493A-42F0-B0A1-B00B0C0EC8C3} = {949AEFDF-4834-4597-A739-4766DD10B1A6}
+		{5D18E693-567D-4B73-AF8A-47ABDF4BDCFD} = {949AEFDF-4834-4597-A739-4766DD10B1A6}
+		{8AE69891-157F-4FA9-8F12-1BB31A37B77A} = {949AEFDF-4834-4597-A739-4766DD10B1A6}
+		{8170ECDB-6F78-4CB3-99B4-7D184512203B} = {02C5F1F6-81D1-48E5-AFAE-9F593E7F3583}
+		{6B4EC4EB-ADF1-4EEF-BF81-430E34FF08DB} = {02C5F1F6-81D1-48E5-AFAE-9F593E7F3583}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5E9505D-389A-48BF-9622-6A26A3151696}
