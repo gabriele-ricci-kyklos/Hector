@@ -51,7 +51,7 @@ namespace Hector.Reflection
                 if (isBaseTypeProperty)
                 {
                     int typeHirearchyOrder = prop.DeclaringType is null ? -1 : Array.IndexOf(typesHierarchyList, prop.DeclaringType);
-                    if (!baseTypePropList.TryAdd(typeHirearchyOrder, new(prop.AsArray())))
+                    if (!baseTypePropList.NetCoreTryAdd(typeHirearchyOrder, new(prop.AsArray())))
                     {
                         baseTypePropList[typeHirearchyOrder].Add(prop);
                     }
@@ -235,8 +235,8 @@ namespace Hector.Reflection
 
             foreach (DataColumn col in tableRow.Table.Columns)
             {
-                string? mappedPropertyName = propertyNamesMap?.GetValueOrDefault(col.ColumnName);
-                Member? member = propertiesDict.GetValueOrDefault(mappedPropertyName ?? col.ColumnName);
+                string? mappedPropertyName = propertyNamesMap?.NetCoreGetValueOrDefault(col.ColumnName);
+                Member? member = propertiesDict.NetCoreGetValueOrDefault(mappedPropertyName ?? col.ColumnName);
                 if (member is null)
                 {
                     if (throwIfPropertyNotFound)
@@ -277,7 +277,7 @@ namespace Hector.Reflection
             Member[] props = srcAcc.GetMemberList(propertiesToExclude);
             foreach (Member p in props)
             {
-                Member? dstProp = dstPropsDict.GetValueOrDefault(p.Name);
+                Member? dstProp = dstPropsDict.NetCoreGetValueOrDefault(p.Name);
 
                 if (!p.CanWrite() || !p.CanRead() || dstProp is null)
                 {
