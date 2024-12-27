@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Hector;
 
 namespace Hector.Tests.Core.ExtensionMethods
 {

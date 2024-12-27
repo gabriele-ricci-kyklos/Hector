@@ -1,5 +1,4 @@
 ﻿using Hector;
-using Hector.Reflection;
 using Hector.Data;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;
@@ -7,6 +6,7 @@ using Hector.Data.Entities.Attributes;
 using Hector.Data.Oracle;
 using Hector.Data.Queries;
 using Hector.Data.SqlServer;
+using Hector.Reflection;
 using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;

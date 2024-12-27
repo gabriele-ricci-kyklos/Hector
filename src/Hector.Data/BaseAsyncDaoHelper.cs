@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using Hector.Data.Entities;
 using System;
-using Hector.Data.Entities;
+using System.Collections.Generic;
+using System.Data;
 
 namespace Hector.Data
 {

@@ -1,6 +1,4 @@
 ﻿using FluentAssertions;
-using Hector;
-using System;
 
 namespace Hector.Tests.Core.ExtensionMethods
 {
@@ -18,7 +16,7 @@ namespace Hector.Tests.Core.ExtensionMethods
                 func
                     .Invoking(f => f(testValue))
                     .Should().Throw<ArgumentNullException>();
-            }    
+            }
             else
             {
                 func(testValue).Should().Be(testValue);

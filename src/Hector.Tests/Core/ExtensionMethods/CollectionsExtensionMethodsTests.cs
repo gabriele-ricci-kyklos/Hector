@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Hector;
 
 namespace Hector.Tests.Core.ExtensionMethods
 {
@@ -165,7 +164,7 @@ namespace Hector.Tests.Core.ExtensionMethods
             bool itemIsNull = item is null;
             int?[]? outcome = item.AsArrayOrNull();
 
-            if(itemIsNull)
+            if (itemIsNull)
             {
                 outcome.Should().BeNull();
             }

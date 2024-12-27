@@ -1,5 +1,4 @@
-﻿using Hector;
-using System;
+﻿using System;
 
 namespace Hector.Data.DataMapping
 {

@@ -1,5 +1,4 @@
-﻿using Hector;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -164,7 +163,7 @@ namespace Hector.Data.Queries
                     .Select(x => x.Trim())
                     .ToArray();
 
-            string? funcStr = _sqlFuncMapping.GetValueOrDefault(funcName);
+            string? funcStr = _sqlFuncMapping.NetCoreGetValueOrDefault(funcName);
             if (funcStr.IsNullOrBlankString())
             {
                 funcStr = funcName;

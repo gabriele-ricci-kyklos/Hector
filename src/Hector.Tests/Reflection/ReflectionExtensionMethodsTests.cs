@@ -161,7 +161,7 @@ namespace Hector.Tests.Reflection
         public void TestGetMemberValues()
         {
             TypeAccessor acc = TypeAccessor.Create(typeof(Entity));
-            
+
             string[] expetedProps = [nameof(Entity.Diagnosis), nameof(Entity.Dosage), nameof(Entity.Drug)]; //order matters
             object[] expectedValues = [50, "Drug Z", "Problem Z"];
 

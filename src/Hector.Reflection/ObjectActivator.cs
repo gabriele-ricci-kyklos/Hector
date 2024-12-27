@@ -78,8 +78,8 @@ namespace Hector.Reflection
             for (int i = 0; i < parameters.Length; ++i)
             {
                 var param = parameters[i];
-                
-                if(param.ParameterType.IsNullableType())
+
+                if (param.ParameterType.IsNullableType())
                 {
                     ilGenerator.Emit(OpCodes.Ldarga_S, i);
                     var underlyingType = Nullable.GetUnderlyingType(param.ParameterType);

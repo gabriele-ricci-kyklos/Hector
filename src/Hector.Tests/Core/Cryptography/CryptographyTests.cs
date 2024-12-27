@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using Hector.Compression;
 using Hector.Cryptography;
 using System.Text;
 
