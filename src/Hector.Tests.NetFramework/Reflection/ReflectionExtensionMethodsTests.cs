@@ -6,7 +6,7 @@ using System.Data;
 using System.Linq;
 using Xunit;
 
-namespace Hector.Tests.NetFramework.Core.Reflection
+namespace Hector.Tests.NetFramework.Reflection
 {
     public class ReflectionExtensionMethodsTests
     {

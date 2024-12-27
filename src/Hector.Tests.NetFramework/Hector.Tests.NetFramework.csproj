@@ -134,7 +134,7 @@
     <Compile Include="Core\Collections\CollectionTests.cs" />
     <Compile Include="Core\Compression\CompressionTests.cs" />
     <Compile Include="Core\Parallelism\ParallelismTests.cs" />
-    <Compile Include="Core\Reflection\ReflectionExtensionMethodsTests.cs" />
+    <Compile Include="Reflection\ReflectionExtensionMethodsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
