@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Hector
 {
-    public static class NetCoreExtensionMethods
+    internal static class NetCoreExtensionMethods
     {
-        public static TValue? NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
+        internal static TValue? NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
         {
 #if NET5_0_OR_GREATER
             return dictionary.GetValueOrDefault(key);
@@ -14,7 +14,7 @@ namespace Hector
 #endif
         }
 
-        public static TValue NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+        internal static TValue NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
         {
 #if NET5_0_OR_GREATER
             return dictionary.GetValueOrDefault(key, defaultValue);
@@ -28,7 +28,7 @@ namespace Hector
 #endif
         }
 
-        public static bool NetCoreTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        internal static bool NetCoreTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {
 #if NET5_0_OR_GREATER
             return dictionary.TryAdd(key, value);
@@ -48,7 +48,7 @@ namespace Hector
 #endif
         }
 
-        public static T GetItemByIndex<T>(this ArraySegment<T> segment, int index)
+        internal static T GetItemByIndex<T>(this ArraySegment<T> segment, int index)
         {
 #if NET5_0_OR_GREATER
             return segment[index];
