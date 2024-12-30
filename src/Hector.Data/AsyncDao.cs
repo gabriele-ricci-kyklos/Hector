@@ -90,7 +90,7 @@ namespace Hector.Data
             return ExecuteNonQueryAsync(connection, command, cancellationToken);
         }
 
-        public static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
+        protected static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
         {
             try
             {

@@ -34,11 +34,10 @@ namespace Hector.Data.Oracle
                 EntityHelper
                     .GetEntityPropertyInfoList(type)
                     .OrderBy(x => x.ColumnOrder)
-                    .ToArray()
-                    ;
+                    .ToArray();
 
             Dictionary<string, List<object>> dataMap = [];
-            TypeAccessor typeAccessor = TypeAccessor.Create(type, true);
+            TypeAccessor typeAccessor = TypeAccessor.Create(type);
 
             string fieldNames =
                 fieldInfoList
@@ -78,7 +77,7 @@ namespace Hector.Data.Oracle
                 paramNames.Add(param.ParameterName);
             }
 
-            tableName ??= EntityHelper.GetEntityTableName(type).GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+            tableName ??= EntityHelper.GetEntityTableName(type);
             string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
             cmd.CommandText = query;
 
@@ -91,9 +90,78 @@ namespace Hector.Data.Oracle
         protected override string GetInsertIntoCommandText(string? schema, string tableName, string fieldNames, string paramNames) =>
             $" INSERT /*+ APPEND */ INTO {schema}{tableName} ({fieldNames}) VALUES ({paramNames})";
 
-        public override Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            EntityDefinition<T> entityDefinition = new();
+            EntityXMLSerializer<T> serializer = new(entityDefinition, _daoHelper);
+
+            tableName ??= entityDefinition.TableName;
+
+            string[] pkFields =
+                entityDefinition.PrimaryKeyFields
+                ?? throw new NotSupportedException($"No primary key fields found in entity type {entityDefinition.Type.FullName}, unable to perform the upsert");
+
+            string joinCondition =
+                pkFields
+                    .Select(x => $"dst.{x} = src.{x}")
+                    .StringJoin(" AND ");
+
+            var fieldNames =
+                entityDefinition
+                    .PropertyInfoList
+                    .Select(x => _daoHelper.EscapeFieldName(x.ColumnName));
+
+            string xmlEntityDefinition = serializer.SerializeEntityDefinition(Schema);
+
+            string updateText =
+                "UPDATE SET "
+                + entityDefinition
+                    .PropertyInfoList
+                    .Select(x => x.ColumnName)
+                    .Except(pkFields)
+                    .Select(x =>
+                    {
+                        string f = _daoHelper.EscapeFieldName(x);
+                        return $"dst.{x} = src.{x}";
+                    })
+                    .StringJoin(", ");
+
+            string insertText =
+                $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
+
+            string upsertText = $@"
+                MERGE INTO {Schema}.{tableName} dst
+                USING
+                (
+                    {xmlEntityDefinition}
+                ) src
+                ON ({joinCondition})
+                WHEN MATCHED THEN
+                    {updateText}
+                WHEN NOT MATCHED THEN
+                    {insertText}";
+
+            using DbConnection dbConnection = GetDbConnection();
+            using DbCommand cmd = dbConnection.CreateCommand();
+
+            cmd.CommandText = upsertText;
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandTimeout = timeoutInSeconds;
+
+            string xmlData = serializer.SerializeEntityValues(items);
+
+            OracleParameter p =
+                new()
+                {
+                    ParameterName = "xmlData",
+                    OracleDbType = OracleDbType.Clob,
+                    Value = xmlData
+                };
+
+            cmd.Parameters.Add(p);
+
+            int affectedRecords = await ExecuteNonQueryAsync(dbConnection, cmd, cancellationToken).ConfigureAwait(false);
+            return affectedRecords;
         }
     }
 }

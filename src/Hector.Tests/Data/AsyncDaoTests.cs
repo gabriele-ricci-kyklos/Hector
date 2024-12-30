@@ -15,13 +15,13 @@ namespace Hector.Tests.Data
 {
     public class AsyncDaoTests
     {
-        [EntityInfo(Alias = "b", TableName = "a")]
+        [EntityInfo(Alias = "b", TableName = "BULK")]
         public class BulkItem : IBaseEntity
         {
             [EntityPropertyInfo(ColumnName = "ID", DbType = PropertyDbType.Long, IsNullable = false, IsPrimaryKey = true, ColumnOrder = 10)]
             public long Id { get; set; }
 
-            [EntityPropertyInfo(ColumnName = "CODE", DbType = PropertyDbType.String, IsNullable = false, ColumnOrder = 20)]
+            [EntityPropertyInfo(ColumnName = "CODE", DbType = PropertyDbType.String, MaxLength = 5, IsNullable = false, ColumnOrder = 20)]
             public string? Code { get; set; }
 
             public string TableName => "BULK";
@@ -157,7 +157,7 @@ SELECT * from @tableType
         }
 
         [Fact]
-        public async Task TestOracleBulkInsert()
+        public async Task TestOracleBulkInsertRaw()
         {
             using var conn = new OracleConnection("Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=172.16.10.53)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=rmxora)));User Id=RMX;Password=RMX;");
             await conn.OpenAsync();
@@ -181,7 +181,7 @@ SELECT * from @tableType
         }
 
         [Fact]
-        public async Task TestOracleAsyncDao()
+        public async Task TestOracleBulkInsert()
         {
             AsyncDaoOptions options = new("Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=172.16.10.53)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=rmxora)));User Id=RMX;Password=RMX;", string.Empty, false);
             OracleAsyncDaoHelper daoHelper = new();
@@ -194,6 +194,22 @@ SELECT * from @tableType
                     .ToArray();
 
             await dao.ExecuteBulkCopyAsync(items);
+        }
+
+        [Fact]
+        public async Task TestOracleUpsert()
+        {
+            AsyncDaoOptions options = new("Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=172.16.10.53)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=rmxora)));User Id=RMX;Password=RMX;", "RMX", false);
+            OracleAsyncDaoHelper daoHelper = new();
+            OracleAsyncDao dao = new(options, daoHelper);
+
+            BulkItem[] items =
+                Enumerable
+                    .Range(0, 1000)
+                    .Select(x => new BulkItem { Id = x, Code = "asd" })
+                    .ToArray();
+
+            await dao.ExecuteUpsertAsync(items);
         }
     }
 }
