@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 
 namespace Hector.Data.Queries
 {
+    public record SqlParameter(Type Type, string Name, object Value);
+
     public interface IQueryBuilder
     {
         string Query { get; }
@@ -18,7 +20,7 @@ namespace Hector.Data.Queries
         string GetQueryWithReplacedParameters();
     }
 
-    public class QueryBuilder : IQueryBuilder
+    internal class QueryBuilder : IQueryBuilder
     {
         private readonly IAsyncDaoHelper _asyncDaoHelper;
         private readonly string? _schema;

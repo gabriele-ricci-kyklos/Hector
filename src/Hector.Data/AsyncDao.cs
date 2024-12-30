@@ -1,7 +1,6 @@
 ﻿using Hector.Data.DataMapping;
 using Hector.Data.Entities;
 using Hector.Data.Queries;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -56,7 +55,7 @@ namespace Hector.Data
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
+            ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
 
             try
             {
@@ -76,9 +75,15 @@ namespace Hector.Data
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
-
-            return ExecuteNonQueryAsync(connection, command, cancellationToken);
+            try
+            {
+                ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
+                return ExecuteNonQueryAsync(connection, command, cancellationToken);
+            }
+            finally
+            {
+                connection.Close();
+            }
         }
 
         protected static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
@@ -107,7 +112,7 @@ namespace Hector.Data
             using DbConnection connection = GetDbConnection();
             using DbCommand command = connection.CreateCommand();
 
-            CreateDbCommand(command, queryBuilder, timeoutInSeconds);
+            ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
 
             try
             {
@@ -150,7 +155,7 @@ namespace Hector.Data
             }
         }
 
-        internal static void CreateDbCommand(DbCommand command, IQueryBuilder builder, int timeoutInSeconds = 30)
+        private static void ConfigureDbCommand(DbCommand command, IQueryBuilder builder, int timeoutInSeconds = 30)
         {
             command.CommandText = builder.Query;
             command.CommandTimeout = timeoutInSeconds;
