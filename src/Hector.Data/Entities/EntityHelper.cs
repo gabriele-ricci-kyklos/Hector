@@ -7,7 +7,6 @@ using System.Reflection;
 
 namespace Hector.Data.Entities
 {
-    public record EntityFieldInfo(EntityPropertyInfo PropertyInfo, string ParamName, object Value);
     public record EntityPropertyInfo(PropertyInfo PropertyInfo, PropertyDbType DbType, Type Type, string PropertyName, string ColumnName, short ColumnOrder,
         bool IsNullable, bool IsPrimaryKey, int MaxLength, int NumericPrecision, int NumericScale);
 
@@ -52,14 +51,15 @@ namespace Hector.Data.Entities
             return results.ToArray();
         }
 
-        public static string? GetEntityTableName<T>() => GetEntityTableName(typeof(T));
+        public static string GetEntityTableName<T>(bool throwIfNotFound = true) => GetEntityTableName(typeof(T), throwIfNotFound);
 
-        public static string? GetEntityTableName(Type type) =>
+        public static string GetEntityTableName(Type type, bool throwIfNotFound = true) =>
             type
                 .GetAttributeOfType<EntityInfoAttribute>()
-                ?.TableName;
+                ?.TableName
+                ?? (throwIfNotFound ? throw new ArgumentNullException(nameof(EntityInfoAttribute.TableName)) : string.Empty);
 
-        public static string[] GetPrimaryKeyFields(this Type entityType)
+        public static string[] GetPrimaryKeyFields(this Type entityType, EntityPropertyInfo[]? propertyInfoList = null)
         {
             if (entityType is null)
             {
@@ -67,7 +67,7 @@ namespace Hector.Data.Entities
             }
 
             return
-                GetEntityPropertyInfoList(entityType)
+                (propertyInfoList ?? GetEntityPropertyInfoList(entityType))
                 .Where(x => x.IsPrimaryKey)
                 .OrderBy(x => x.ColumnOrder)
                 .Select(x => x.ColumnName)

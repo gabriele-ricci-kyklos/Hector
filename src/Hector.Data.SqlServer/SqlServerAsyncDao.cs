@@ -39,7 +39,7 @@ namespace Hector.Data.SqlServer
                 }
 
                 using SqlBulkCopy bcp = new(connection as SqlConnection);
-                bcp.DestinationTableName = tableName ?? EntityHelper.GetEntityTableName<T>().GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+                bcp.DestinationTableName = tableName ?? EntityHelper.GetEntityTableName<T>();
                 bcp.BatchSize = batchSize;
                 bcp.BulkCopyTimeout = timeoutInSeconds;
 
@@ -57,11 +57,17 @@ namespace Hector.Data.SqlServer
         {
             Type type = typeof(T);
 
-            tableName ??= EntityHelper.GetEntityTableName(type).GetNonNullOrThrow(nameof(EntityHelper.GetEntityTableName));
+            tableName ??= EntityHelper.GetEntityTableName(type);
+
+            EntityPropertyInfo[] propertyInfoList =
+                EntityHelper
+                    .GetEntityPropertyInfoList(type)
+                    .OrderBy(x => x.ColumnOrder)
+                    .ToArray();
 
             string[] pkFields =
                 EntityHelper
-                    .GetPrimaryKeyFields(type)
+                    .GetPrimaryKeyFields(type, propertyInfoList)
                     .ToNullIfEmptyArray()
                 ?? throw new NotSupportedException($"No primary key fields found in entity type {type.FullName}, unable to perform the upsert");
 
@@ -70,14 +76,8 @@ namespace Hector.Data.SqlServer
                     .Select(x => $"dst.{x} = src.{x}")
                     .StringJoin(" AND ");
 
-            EntityPropertyInfo[] fieldInfoList =
-                EntityHelper
-                    .GetEntityPropertyInfoList(type)
-                    .OrderBy(x => x.ColumnOrder)
-                    .ToArray();
-
             var fieldNames =
-                fieldInfoList
+                propertyInfoList
                     .Select(x => _daoHelper.EscapeFieldName(x.ColumnName));
 
             string updateText =
