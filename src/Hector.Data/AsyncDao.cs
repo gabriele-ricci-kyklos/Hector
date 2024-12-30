@@ -63,16 +63,7 @@ namespace Hector.Data
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                 object? result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-
-                try
-                {
-                    T? value = default;
-                    return value;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidCastException($"Unable to cast return value to type {typeof(T?).FullName}", ex);
-                }
+                return (T?)result;
             }
             finally
             {

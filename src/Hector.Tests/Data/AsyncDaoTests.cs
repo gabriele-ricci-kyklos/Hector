@@ -1,4 +1,5 @@
-﻿using Hector;
+﻿using FluentAssertions;
+using Hector;
 using Hector.Data;
 using Hector.Data.DataReaders;
 using Hector.Data.Entities;
@@ -155,6 +156,18 @@ SELECT * from @tableType
                     .ToArray();
 
             await dao.ExecuteBulkCopyAsync(items);
+        }
+
+        [Fact]
+        public async Task TestSqlServerScalar()
+        {
+            AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
+
+            SqlServerAsyncDaoHelper daoHelper = new();
+            SqlServerAsyncDao dao = new(options, daoHelper);
+
+            int c = await dao.ExecuteScalarAsync<int>(dao.NewQueryBuilder().SetQuery("select count(*) from [BULK]"));
+            c.Should().BeGreaterThan(0);
         }
 
         [Fact]
