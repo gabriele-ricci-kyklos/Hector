@@ -20,7 +20,7 @@ namespace Hector.Data
         string DummyTableName { get; }
         string SequenceValue { get; }
 
-        string EscapeFieldName(string fieldName);
+        string EscapeValue(string value);
         string BuildParameterName(string name);
         string BuildParameterName(int i);
 

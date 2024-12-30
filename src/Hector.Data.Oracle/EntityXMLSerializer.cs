@@ -33,9 +33,9 @@ namespace Hector.Data.Oracle
                     (x =>
                         x.DbType switch
                         {
-                            PropertyDbType.DateTime => $"TO_DATE(Y.{x.ColumnName}, 'yyyy-mm-dd hh24:mi:ss') AS {_daoHelper.EscapeFieldName(x.ColumnName)}",
-                            PropertyDbType.Blob or PropertyDbType.ByteArray => $"{schema}HexToBlob(Y.{x.ColumnName}) AS {_daoHelper.EscapeFieldName(x.ColumnName)}",
-                            _ => $"Y.{x.ColumnName} AS {_daoHelper.EscapeFieldName(x.ColumnName)}"
+                            PropertyDbType.DateTime => $"TO_DATE(Y.{x.ColumnName}, 'yyyy-mm-dd hh24:mi:ss') AS {_daoHelper.EscapeValue(x.ColumnName)}",
+                            PropertyDbType.Blob or PropertyDbType.ByteArray => $"{schema}HexToBlob(Y.{x.ColumnName}) AS {_daoHelper.EscapeValue(x.ColumnName)}",
+                            _ => $"Y.{x.ColumnName} AS {_daoHelper.EscapeValue(x.ColumnName)}"
                         }
                     )
                     .StringJoin($",{Environment.NewLine}");

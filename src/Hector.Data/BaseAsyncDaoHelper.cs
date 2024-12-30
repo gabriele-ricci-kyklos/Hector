@@ -79,14 +79,14 @@ namespace Hector.Data
 
         public virtual string DummyTableName => string.Empty;
 
-        public string EscapeFieldName(string? fieldName)
+        public string EscapeValue(string? fieldName)
         {
-            if (string.IsNullOrWhiteSpace(fieldName))
+            if (fieldName.IsNullOrBlankString())
             {
                 return string.Empty;
             }
 
-            fieldName = fieldName.Trim();
+            fieldName = fieldName!.Trim();
 
             if (!fieldName.StartsWith(EscapeLeftStr))
             {

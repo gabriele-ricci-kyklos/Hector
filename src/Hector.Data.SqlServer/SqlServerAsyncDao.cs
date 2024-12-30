@@ -28,15 +28,10 @@ namespace Hector.Data.SqlServer
 
             try
             {
-                DbDataReader reader;
-                if (items is T[])
-                {
-                    reader = new ArrayDbDataReader<T>(items.ToArray());
-                }
-                else
-                {
-                    reader = new EnumerableDbDataReader<T>(items);
-                }
+                using DbDataReader reader =
+                    (items is T[])
+                        ? new ArrayDbDataReader<T>(items.ToArray())
+                        : new EnumerableDbDataReader<T>(items);
 
                 using SqlBulkCopy bcp = new(connection as SqlConnection);
                 bcp.DestinationTableName = tableName ?? EntityHelper.GetEntityTableName<T>();
@@ -55,42 +50,45 @@ namespace Hector.Data.SqlServer
 
         public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            Type type = typeof(T);
+            EntityDefinition<T> entityDefinition = new();
 
-            tableName ??= EntityHelper.GetEntityTableName(type);
+            tableName ??= entityDefinition.TableName;
 
             EntityPropertyInfo[] propertyInfoList =
-                EntityHelper
-                    .GetEntityPropertyInfoList(type)
+                entityDefinition
+                    .PropertyInfoList
                     .OrderBy(x => x.ColumnOrder)
                     .ToArray();
 
             string[] pkFields =
-                EntityHelper
-                    .GetPrimaryKeyFields(type, propertyInfoList)
+                entityDefinition
+                    .PrimaryKeyFields
                     .ToNullIfEmptyArray()
-                ?? throw new NotSupportedException($"No primary key fields found in entity type {type.FullName}, unable to perform the upsert");
+                ?? throw new NotSupportedException($"No primary key fields found in entity type {entityDefinition.Type.FullName}, unable to perform the upsert");
 
             string joinCondition =
                 pkFields
                     .Select(x => $"dst.{x} = src.{x}")
                     .StringJoin(" AND ");
 
-            var fieldNames =
-                propertyInfoList
-                    .Select(x => _daoHelper.EscapeFieldName(x.ColumnName));
-
             string updateText =
                 "UPDATE SET "
-                + fieldNames
+                + entityDefinition
+                    .PropertyInfoList
+                    .Select(x => x.ColumnName)
+                    .Except(pkFields)
                     .Select(x => $"dst.{x} = src.{x}")
                     .StringJoin(", ");
+
+            var fieldNames =
+                propertyInfoList
+                    .Select(x => _daoHelper.EscapeValue(x.ColumnName));
 
             string insertText =
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE {Schema}.{tableName} as dst
+                MERGE {Schema}.{_daoHelper.EscapeValue(tableName)} as dst
                 USING
                 (
                     SELECT {fieldNames.StringJoin(",")}

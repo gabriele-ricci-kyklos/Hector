@@ -1,6 +1,4 @@
-﻿using FastMember;
-using Hector;
-using Hector.Data.Entities;
+﻿using Hector.Data.Entities;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
@@ -23,32 +21,21 @@ namespace Hector.Data.Oracle
 
         public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            //Va creato un query builder con una insert into con i nomi campi e parametri dell'entità
-            //Va creata forse una logica common per realizzarlo
-            //Poi settare il paramentro ArrayBindCount dentro OracleCommand con il count delle entità da inserire
-            //Ed eseguire con ExecuteNonQueryAsync
-
-            Type type = typeof(T);
-
-            EntityPropertyInfo[] fieldInfoList =
-                EntityHelper
-                    .GetEntityPropertyInfoList(type)
-                    .OrderBy(x => x.ColumnOrder)
-                    .ToArray();
+            EntityDefinition<T> entityDefinition = new();
 
             Dictionary<string, List<object>> dataMap = [];
-            TypeAccessor typeAccessor = TypeAccessor.Create(type);
 
             string fieldNames =
-                fieldInfoList
-                    .Select(x => _daoHelper.EscapeFieldName(x.ColumnName))
+                entityDefinition
+                    .PropertyInfoList
+                    .Select(x => _daoHelper.EscapeValue(x.ColumnName))
                     .StringJoin(", ");
 
             foreach (T item in items)
             {
-                foreach (EntityPropertyInfo entityPropertyInfo in fieldInfoList)
+                foreach (EntityPropertyInfo entityPropertyInfo in entityDefinition.PropertyInfoList)
                 {
-                    object value = typeAccessor[item, entityPropertyInfo.PropertyName];
+                    object value = entityDefinition.TypeAccessor[item, entityPropertyInfo.PropertyName];
 
                     if (dataMap.TryGetValue(entityPropertyInfo.ColumnName, out List<object>? values))
                     {
@@ -77,7 +64,7 @@ namespace Hector.Data.Oracle
                 paramNames.Add(param.ParameterName);
             }
 
-            tableName ??= EntityHelper.GetEntityTableName(type);
+            tableName ??= EntityHelper.GetEntityTableName(entityDefinition.Type);
             string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
             cmd.CommandText = query;
 
@@ -106,11 +93,6 @@ namespace Hector.Data.Oracle
                     .Select(x => $"dst.{x} = src.{x}")
                     .StringJoin(" AND ");
 
-            var fieldNames =
-                entityDefinition
-                    .PropertyInfoList
-                    .Select(x => _daoHelper.EscapeFieldName(x.ColumnName));
-
             string xmlEntityDefinition = serializer.SerializeEntityDefinition(Schema);
 
             string updateText =
@@ -121,16 +103,21 @@ namespace Hector.Data.Oracle
                     .Except(pkFields)
                     .Select(x =>
                     {
-                        string f = _daoHelper.EscapeFieldName(x);
+                        string f = _daoHelper.EscapeValue(x);
                         return $"dst.{x} = src.{x}";
                     })
                     .StringJoin(", ");
+
+            var fieldNames =
+                entityDefinition
+                    .PropertyInfoList
+                    .Select(x => _daoHelper.EscapeValue(x.ColumnName));
 
             string insertText =
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE INTO {Schema}.{tableName} dst
+                MERGE INTO {Schema}.{_daoHelper.EscapeValue(tableName)} dst
                 USING
                 (
                     {xmlEntityDefinition}

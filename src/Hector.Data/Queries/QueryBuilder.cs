@@ -127,7 +127,7 @@ namespace Hector.Data.Queries
         {
             if (shouldEscapeName)
             {
-                placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
+                placeholderValue = _asyncDaoHelper.EscapeValue(placeholderValue);
             }
 
             output
@@ -138,7 +138,7 @@ namespace Hector.Data.Queries
         {
             if (shouldEscapeName)
             {
-                placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
+                placeholderValue = _asyncDaoHelper.EscapeValue(placeholderValue);
             }
 
             output
@@ -185,7 +185,7 @@ namespace Hector.Data.Queries
         {
             if (shouldEscapeName)
             {
-                placeholderValue = _asyncDaoHelper.EscapeFieldName(placeholderValue);
+                placeholderValue = _asyncDaoHelper.EscapeValue(placeholderValue);
             }
 
             placeholderValue = $"{_schema}.{placeholderValue}";

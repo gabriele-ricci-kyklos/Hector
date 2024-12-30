@@ -33,7 +33,7 @@ namespace Hector.Data.DataReaders
 
         public EnumerableDbDataReader(Type type, IEnumerable values)
         {
-            _type = typeof(T);
+            _type = type;
             _members = GetMembers();
             _indexedMembers = GetIndexedMembers();
             _memberNames = _members.Keys.ToArray();

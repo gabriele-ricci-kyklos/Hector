@@ -23,12 +23,6 @@ namespace Hector.Tests.Data
 
             [EntityPropertyInfo(ColumnName = "CODE", DbType = PropertyDbType.String, MaxLength = 5, IsNullable = false, ColumnOrder = 20)]
             public string? Code { get; set; }
-
-            public string TableName => "BULK";
-
-            public string Alias => "B";
-
-            public bool IsView => false;
         }
 
         public class Result
@@ -137,8 +131,11 @@ SELECT * from @tableType
             SqlServerAsyncDaoHelper daoHelper = new();
             SqlServerAsyncDao dao = new(options, daoHelper);
 
-            var items = await dao.ExecuteSelectQueryAsync<MarketDbItem>("select * from Markets2");
-            items.ForEach(x => x.MarketCode = "AS");
+            BulkItem[] items =
+                Enumerable
+                    .Range(0, 1000)
+                    .Select(x => new BulkItem { Id = x, Code = "asd" })
+                    .ToArray();
 
             await dao.ExecuteUpsertAsync(items);
         }
@@ -151,7 +148,11 @@ SELECT * from @tableType
             SqlServerAsyncDaoHelper daoHelper = new();
             SqlServerAsyncDao dao = new(options, daoHelper);
 
-            var items = await dao.ExecuteSelectQueryAsync<MarketDbItem>("select * from Markets3");
+            BulkItem[] items =
+                Enumerable
+                    .Range(0, 1000)
+                    .Select(x => new BulkItem { Id = x, Code = x.ToString() })
+                    .ToArray();
 
             await dao.ExecuteBulkCopyAsync(items);
         }

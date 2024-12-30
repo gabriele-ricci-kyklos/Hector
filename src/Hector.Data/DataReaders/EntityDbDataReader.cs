@@ -84,13 +84,13 @@ namespace Hector.Data.DataReaders
                 row[dt.DataTypeColumn] = GetFieldType(i);
                 row[dt.ColumnSizeColumn] = fieldAttribute?.MaxLength ?? -1;
 
-                var (precision, scale) =
+                (int? precision, int? scale) =
                     fieldAttribute is null ?
                     (null, null)
                     : RetrieveNumberPrecision(fieldAttribute);
 
-                row[dt.NumericPrecisionColumn] = precision;
-                row[dt.NumericScaleColumn] = scale;
+                row[dt.NumericPrecisionColumn] = !precision.HasValue ? DBNull.Value : precision;
+                row[dt.NumericScaleColumn] = !scale.HasValue ? DBNull.Value : scale;
 
                 dt.Rows.Add(row);
             }
