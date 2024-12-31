@@ -71,7 +71,7 @@ namespace Hector.Data.Oracle
             return affectedRecords;
         }
 
-        public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             EntityDefinition<T> entityDefinition = new();
             EntityXMLSerializer<T> serializer = new(entityDefinition, _daoHelper);
