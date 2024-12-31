@@ -3,7 +3,7 @@ using Hector.Data.Entities.Attributes;
 
 namespace Hector.Data.Oracle
 {
-    public class OracleAsyncDaoHelper : BaseAsyncDaoHelper
+    public class OracleAsyncDaoHelper(bool ignoreEscape) : BaseAsyncDaoHelper(ignoreEscape)
     {
         public override string ParameterPrefix => ":";
 

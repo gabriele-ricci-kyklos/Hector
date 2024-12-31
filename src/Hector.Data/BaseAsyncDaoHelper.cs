@@ -8,6 +8,7 @@ namespace Hector.Data
     public abstract class BaseAsyncDaoHelper : IAsyncDaoHelper
     {
         private static readonly Dictionary<Type, DbType> _typeToDbMapping;
+        private readonly bool _ignoreEscape;
 
         static BaseAsyncDaoHelper()
         {
@@ -49,6 +50,11 @@ namespace Hector.Data
                 };
         }
 
+        protected BaseAsyncDaoHelper(bool ignoreEscape)
+        {
+            _ignoreEscape = ignoreEscape;
+        }
+
         public abstract string ParameterPrefix { get; }
 
         public abstract string StringConcatOperator { get; }
@@ -79,25 +85,29 @@ namespace Hector.Data
 
         public virtual string DummyTableName => string.Empty;
 
-        public string EscapeValue(string? fieldName)
+        public string EscapeValue(string? value)
         {
-            if (fieldName.IsNullOrBlankString())
+            if (_ignoreEscape)
+            {
+                return value ?? string.Empty;
+            }
+            else if (value.IsNullOrBlankString())
             {
                 return string.Empty;
             }
 
-            fieldName = fieldName!.Trim();
+            value = value!.Trim();
 
-            if (!fieldName.StartsWith(EscapeLeftStr))
+            if (!value.StartsWith(EscapeLeftStr))
             {
-                fieldName = EscapeLeftStr + fieldName;
+                value = EscapeLeftStr + value;
             }
-            if (!fieldName.EndsWith(EscapeRightStr))
+            if (!value.EndsWith(EscapeRightStr))
             {
-                fieldName += EscapeRightStr;
+                value += EscapeRightStr;
             }
 
-            return fieldName;
+            return value;
         }
 
         public static DbType MapTypeToDbType(Type type)

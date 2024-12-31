@@ -3,7 +3,7 @@ using Hector.Data.Entities.Attributes;
 
 namespace Hector.Data.SqlServer
 {
-    public class SqlServerAsyncDaoHelper : BaseAsyncDaoHelper
+    public class SqlServerAsyncDaoHelper(bool ignoreEscape) : BaseAsyncDaoHelper(ignoreEscape)
     {
         private const int _decimalNumericPrecision = 18;
         private const int _decimalNumericScale = 5;
