@@ -142,5 +142,12 @@ namespace Hector.Reflection
 
         public static bool IsDerivedType<T>(this Type type) =>
             typeof(T).IsAssignableFrom(type);
+
+        public static bool IsConcreteType(this Type type) =>
+            type is not null
+                && !type.IsAbstract
+                && !type.IsArray
+                && type != typeof(object)
+                && !type.IsDerivedType<Delegate>();
     }
 }

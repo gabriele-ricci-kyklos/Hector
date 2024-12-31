@@ -9,95 +9,6 @@ namespace Hector.Tests.Reflection
 {
     public class ReflectionExtensionMethodsTests
     {
-        public class BaseEntity
-        {
-            public string? Name { get; set; }
-        }
-
-        public class ConcreteEntity : BaseEntity
-        {
-            public int Dosage { get; set; }
-            public string? Drug { get; set; }
-            public string? Diagnosis { get; set; }
-            public DateTime? Date { get; set; }
-
-            public override int GetHashCode() => HashCode.Combine(Dosage, Drug, Diagnosis, Date);
-
-            public override bool Equals(object? obj)
-            {
-                if (obj is not Entity e)
-                {
-                    return false;
-                }
-
-                return Dosage.Equals(e.Dosage)
-                    && (Drug.IsNullOrBlankString() || Drug.Equals(e.Drug))
-                    && (Diagnosis.IsNullOrBlankString() || Diagnosis.Equals(e.Diagnosis))
-                    && Date.Equals(e.Date);
-            }
-        }
-
-        [Serializable]
-        public class Entity
-        {
-            [Ordinal(2)]
-            public int Dosage { get; set; }
-            [Ordinal(1)]
-            public string? Drug { get; set; }
-            [Ordinal(3)]
-            public string? Diagnosis { get; set; }
-            public DateTime? Date { get; set; }
-
-            public override int GetHashCode() => HashCode.Combine(Dosage, Drug, Diagnosis, Date);
-
-            public override bool Equals(object? obj)
-            {
-                if (obj is not Entity e)
-                {
-                    return false;
-                }
-
-                return Dosage.Equals(e.Dosage)
-                    && (Drug.IsNullOrBlankString() || Drug.Equals(e.Drug))
-                    && (Diagnosis.IsNullOrBlankString() || Diagnosis.Equals(e.Diagnosis))
-                    && Date.Equals(e.Date);
-            }
-        }
-
-        public class Entity2
-        {
-            public int Dosage { get; set; }
-            public string? Drug { get; set; }
-            public string? Diagnosis { get; set; }
-            public DateTime? Date { get; set; }
-        }
-
-        public class Entity3
-        {
-            public int Dosage { get; set; }
-            public string? Drug { get; set; }
-            public string? Diagnosis { get; set; }
-            public DateTime? Date { get; set; }
-        }
-
-        public class Entity4
-        {
-            public int Dosage { get; set; }
-            public string? Drug { get; set; }
-            public string? Diagnosis { get; set; }
-            public DateTime? Date { get; set; }
-
-            public Entity4(int dosage, string? drug, string? diagnosis, DateTime? date)
-            {
-                Dosage = dosage;
-                Drug = drug;
-                Diagnosis = diagnosis;
-                Date = date;
-            }
-        }
-
-
-
         [Fact]
         public void TestToEntityList()
         {
@@ -273,6 +184,15 @@ namespace Hector.Tests.Reflection
         }
 
         [Fact]
+        public void TestIsConcreteType()
+        {
+            typeof(ConcreteEntity).IsConcreteType().Should().BeTrue();
+            typeof(BaseEntity).IsConcreteType().Should().BeFalse();
+            typeof(int[]).IsConcreteType().Should().BeFalse();
+            typeof(object).IsConcreteType().Should().BeFalse();
+        }
+
+        [Fact]
         public void TestHasAttribute()
         {
             typeof(Entity).HasAttribute<SerializableAttribute>().Should().BeTrue();
@@ -368,5 +288,92 @@ namespace Hector.Tests.Reflection
         //        ObjectActivator
         //            .CreateInstance(typeof(Entity4), [1, "a", "b", null]);
         //}
+    }
+
+    public abstract class BaseEntity
+    {
+        public string? Name { get; set; }
+    }
+
+    public class ConcreteEntity : BaseEntity
+    {
+        public int Dosage { get; set; }
+        public string? Drug { get; set; }
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
+
+        public override int GetHashCode() => HashCode.Combine(Dosage, Drug, Diagnosis, Date);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not Entity e)
+            {
+                return false;
+            }
+
+            return Dosage.Equals(e.Dosage)
+                && (Drug.IsNullOrBlankString() || Drug.Equals(e.Drug))
+                && (Diagnosis.IsNullOrBlankString() || Diagnosis.Equals(e.Diagnosis))
+                && Date.Equals(e.Date);
+        }
+    }
+
+    [Serializable]
+    public class Entity
+    {
+        [Ordinal(2)]
+        public int Dosage { get; set; }
+        [Ordinal(1)]
+        public string? Drug { get; set; }
+        [Ordinal(3)]
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
+
+        public override int GetHashCode() => HashCode.Combine(Dosage, Drug, Diagnosis, Date);
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not Entity e)
+            {
+                return false;
+            }
+
+            return Dosage.Equals(e.Dosage)
+                && (Drug.IsNullOrBlankString() || Drug.Equals(e.Drug))
+                && (Diagnosis.IsNullOrBlankString() || Diagnosis.Equals(e.Diagnosis))
+                && Date.Equals(e.Date);
+        }
+    }
+
+    public class Entity2
+    {
+        public int Dosage { get; set; }
+        public string? Drug { get; set; }
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
+    }
+
+    public class Entity3
+    {
+        public int Dosage { get; set; }
+        public string? Drug { get; set; }
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
+    }
+
+    public class Entity4
+    {
+        public int Dosage { get; set; }
+        public string? Drug { get; set; }
+        public string? Diagnosis { get; set; }
+        public DateTime? Date { get; set; }
+
+        public Entity4(int dosage, string? drug, string? diagnosis, DateTime? date)
+        {
+            Dosage = dosage;
+            Drug = drug;
+            Diagnosis = diagnosis;
+            Date = date;
+        }
     }
 }
