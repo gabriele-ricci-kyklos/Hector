@@ -12,7 +12,7 @@ namespace Hector.Data.Entities
 
     public static class EntityHelper
     {
-        public static EntityPropertyInfo[] GetEntityPropertyInfoList<T>() =>
+        public static EntityPropertyInfo[] GetEntityPropertyInfoList<T>() where T : IBaseEntity =>
             GetEntityPropertyInfoList(typeof(T));
 
         public static EntityPropertyInfo[] GetEntityPropertyInfoList(Type type)

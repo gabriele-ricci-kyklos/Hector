@@ -4,6 +4,7 @@ using System;
 namespace Hector.Data.Entities
 {
     public class EntityDefinition<T>
+        where T : IBaseEntity
     {
         public readonly Type Type;
         public readonly TypeAccessor TypeAccessor;
