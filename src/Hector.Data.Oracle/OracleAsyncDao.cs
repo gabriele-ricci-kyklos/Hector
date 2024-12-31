@@ -29,7 +29,7 @@ namespace Hector.Data.Oracle
             string fieldNames =
                 entityDefinition
                     .PropertyInfoList
-                    .Select(x => _daoHelper.EscapeValue(x.ColumnName))
+                    .Select(x => DaoHelper.EscapeValue(x.ColumnName))
                     .StringJoin(", ");
 
             foreach (T item in items)
@@ -52,7 +52,7 @@ namespace Hector.Data.Oracle
             Dictionary<string, SqlParameter> parametersMap = new(dataMap.Count);
             foreach (var item in dataMap)
             {
-                string paramName = _daoHelper.BuildParameterName(item.Key);
+                string paramName = DaoHelper.BuildParameterName(item.Key);
                 Type type = item.Value.First().GetType();
                 object value = item.Value.ToArray();
 
@@ -74,7 +74,7 @@ namespace Hector.Data.Oracle
         public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
             EntityDefinition<T> entityDefinition = new();
-            EntityXMLSerializer<T> serializer = new(entityDefinition, _daoHelper);
+            EntityXMLSerializer<T> serializer = new(entityDefinition, DaoHelper);
 
             tableName ??= entityDefinition.TableName;
 
@@ -97,7 +97,7 @@ namespace Hector.Data.Oracle
                     .Except(pkFields)
                     .Select(x =>
                     {
-                        string f = _daoHelper.EscapeValue(x);
+                        string f = DaoHelper.EscapeValue(x);
                         return $"dst.{x} = src.{x}";
                     })
                     .StringJoin(", ");
@@ -105,13 +105,13 @@ namespace Hector.Data.Oracle
             var fieldNames =
                 entityDefinition
                     .PropertyInfoList
-                    .Select(x => _daoHelper.EscapeValue(x.ColumnName));
+                    .Select(x => DaoHelper.EscapeValue(x.ColumnName));
 
             string insertText =
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE INTO {Schema}{_daoHelper.EscapeValue(tableName)} dst
+                MERGE INTO {Schema}{DaoHelper.EscapeValue(tableName)} dst
                 USING
                 (
                     {xmlEntityDefinition}

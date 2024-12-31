@@ -23,6 +23,7 @@ namespace Hector.Data
         string ConnectionString { get; }
 
         string Schema { get; }
+        IAsyncDaoHelper DaoHelper { get; }
 
         IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null);
 
@@ -35,9 +36,9 @@ namespace Hector.Data
 
     public abstract class BaseAsyncDao : IAsyncDao
     {
-        protected readonly IAsyncDaoHelper _daoHelper;
         protected readonly AsyncDaoOptions _options;
 
+        public IAsyncDaoHelper DaoHelper { get; }
         public string ConnectionString { get; }
 
         private string _schema;
@@ -57,14 +58,14 @@ namespace Hector.Data
         protected BaseAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper)
         {
             ConnectionString = options.ConnectionString;
+            DaoHelper = asyncDaoHelper;
             _options = options;
-            _daoHelper = asyncDaoHelper;
             _schema = "-";
         }
 
         protected abstract DbConnection NewDbConnection();
 
-        public IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null) => new QueryBuilder(_daoHelper, Schema, parameters).SetQuery(query);
+        public IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null) => new QueryBuilder(DaoHelper, Schema, parameters).SetQuery(query);
 
         public Task<T?> ExecuteScalarAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
             ExecuteScalarCoreAsync<T>(new AsyncDaoCommand(query, parameters), timeoutInSeconds, cancellationToken);

@@ -82,13 +82,13 @@ namespace Hector.Data.SqlServer
 
             var fieldNames =
                 propertyInfoList
-                    .Select(x => _daoHelper.EscapeValue(x.ColumnName));
+                    .Select(x => DaoHelper.EscapeValue(x.ColumnName));
 
             string insertText =
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE {Schema}{_daoHelper.EscapeValue(tableName)} as dst
+                MERGE {Schema}{DaoHelper.EscapeValue(tableName)} as dst
                 USING
                 (
                     SELECT {fieldNames.StringJoin(",")}
@@ -100,7 +100,7 @@ namespace Hector.Data.SqlServer
                 WHEN NOT MATCHED BY TARGET THEN
                     {insertText};";
 
-            using EntityDbDataReader<T> dataReader = new(items, _daoHelper.GetNumericPrecision);
+            using EntityDbDataReader<T> dataReader = new(items, DaoHelper.GetNumericPrecision);
 
             SqlParameter p =
                 new("sourceData", SqlDbType.Structured)
