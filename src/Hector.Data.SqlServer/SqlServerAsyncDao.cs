@@ -19,11 +19,11 @@ namespace Hector.Data.SqlServer
         {
         }
 
-        protected override DbConnection GetDbConnection() => new SqlConnection(ConnectionString);
+        protected override DbConnection NewDbConnection() => new SqlConnection(ConnectionString);
 
         public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = GetDbConnection();
+            using DbConnection connection = NewDbConnection();
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
             try
@@ -102,13 +102,6 @@ namespace Hector.Data.SqlServer
 
             using EntityDbDataReader<T> dataReader = new(items, _daoHelper.GetNumericPrecision);
 
-            using DbConnection dbConnection = GetDbConnection();
-            using DbCommand cmd = dbConnection.CreateCommand();
-
-            cmd.CommandText = upsertText;
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = timeoutInSeconds;
-
             SqlParameter p =
                 new("sourceData", SqlDbType.Structured)
                 {
@@ -117,9 +110,9 @@ namespace Hector.Data.SqlServer
                     Value = dataReader
                 };
 
-            cmd.Parameters.Add(p);
+            AsyncDaoCommand cmd = new(upsertText, [new Queries.SqlParameter(p)]);
 
-            int affectedRecords = await ExecuteNonQueryAsync(dbConnection, cmd, cancellationToken).ConfigureAwait(false);
+            int affectedRecords = await ExecuteNonQueryCoreAsync(cmd, null, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
         }
     }

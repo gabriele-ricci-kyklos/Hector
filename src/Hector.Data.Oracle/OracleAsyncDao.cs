@@ -1,4 +1,5 @@
 ﻿using Hector.Data.Entities;
+using Hector.Data.Queries;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace Hector.Data.Oracle
         {
         }
 
-        protected override DbConnection GetDbConnection() => new OracleConnection(ConnectionString);
+        protected override DbConnection NewDbConnection() => new OracleConnection(ConnectionString);
 
         public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
@@ -48,34 +49,27 @@ namespace Hector.Data.Oracle
                 }
             }
 
-            using DbConnection dbConnection = GetDbConnection();
-            using DbCommand cmd = dbConnection.CreateCommand();
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = timeoutInSeconds;
-
-            List<string> paramNames = new(dataMap.Count);
+            Dictionary<string, SqlParameter> parametersMap = new(dataMap.Count);
             foreach (var item in dataMap)
             {
-                DbParameter param = cmd.CreateParameter();
-                param.ParameterName = _daoHelper.BuildParameterName(item.Key);
-                param.DbType = BaseAsyncDaoHelper.MapTypeToDbType(item.Value.First().GetType());
-                param.Value = item.Value.ToArray();
-                cmd.Parameters.Add(param);
-                paramNames.Add(param.ParameterName);
+                string paramName = _daoHelper.BuildParameterName(item.Key);
+                Type type = item.Value.First().GetType();
+                object value = item.Value.ToArray();
+
+                SqlParameter param = new(type, paramName, value);
+                parametersMap.Add(param.Name, param);
             }
 
             tableName ??= EntityHelper.GetEntityTableName(entityDefinition.Type);
-            string query = GetInsertIntoCommandText(Schema, tableName, fieldNames, paramNames.StringJoin(", "));
-            cmd.CommandText = query;
 
-            (cmd as OracleCommand)!.ArrayBindCount = items.Count();
+            string query = $" INSERT /*+ APPEND */ INTO {Schema}{tableName} ({fieldNames}) VALUES ({parametersMap.Keys.StringJoin(", ")})";
 
-            int affectedRecords = await ExecuteNonQueryAsync(dbConnection, cmd, cancellationToken).ConfigureAwait(false);
+            AsyncDaoCommand cmd = new(query, parametersMap.Values.ToArray());
+            Action<DbCommand> commandFx = cmd => (cmd as OracleCommand)!.ArrayBindCount = items.Count();
+
+            int affectedRecords = await ExecuteNonQueryCoreAsync(cmd, commandFx, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
         }
-
-        protected override string GetInsertIntoCommandText(string? schema, string tableName, string fieldNames, string paramNames) =>
-            $" INSERT /*+ APPEND */ INTO {schema}{tableName} ({fieldNames}) VALUES ({paramNames})";
 
         public override async Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
@@ -128,13 +122,6 @@ namespace Hector.Data.Oracle
                 WHEN NOT MATCHED THEN
                     {insertText}";
 
-            using DbConnection dbConnection = GetDbConnection();
-            using DbCommand cmd = dbConnection.CreateCommand();
-
-            cmd.CommandText = upsertText;
-            cmd.CommandType = CommandType.Text;
-            cmd.CommandTimeout = timeoutInSeconds;
-
             string xmlData = serializer.SerializeEntityValues(items);
 
             OracleParameter p =
@@ -145,9 +132,9 @@ namespace Hector.Data.Oracle
                     Value = xmlData
                 };
 
-            cmd.Parameters.Add(p);
+            AsyncDaoCommand cmd = new(upsertText, [new SqlParameter(p)]);
 
-            int affectedRecords = await ExecuteNonQueryAsync(dbConnection, cmd, cancellationToken).ConfigureAwait(false);
+            int affectedRecords = await ExecuteNonQueryCoreAsync(cmd, null, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
         }
     }

@@ -1,8 +1,8 @@
 ﻿using Hector.Data.DataMapping;
 using Hector.Data.Entities;
 using Hector.Data.Queries;
+using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +15,8 @@ namespace Hector.Data
         string Schema,
         bool IgnoreEscape
     );
+
+    public record AsyncDaoCommand(string CommandText, SqlParameter[]? Parameters);
 
     public interface IAsyncDao
     {
@@ -46,16 +48,20 @@ namespace Hector.Data
             _daoHelper = asyncDaoHelper;
         }
 
-        protected abstract DbConnection GetDbConnection();
+        protected abstract DbConnection NewDbConnection();
 
         public IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null) => new QueryBuilder(_daoHelper, Schema, parameters).SetQuery(query);
 
-        public async Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
-        {
-            using DbConnection connection = GetDbConnection();
-            using DbCommand command = connection.CreateCommand();
+        public Task<T?> ExecuteScalarAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteScalarCoreAsync<T>(new AsyncDaoCommand(query, parameters), timeoutInSeconds, cancellationToken);
 
-            ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
+        public Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteScalarCoreAsync<T>(new AsyncDaoCommand(queryBuilder.Query, queryBuilder.Parameters), timeoutInSeconds, cancellationToken);
+
+        protected async Task<T?> ExecuteScalarCoreAsync<T>(AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        {
+            using DbConnection connection = NewDbConnection();
+            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
 
             try
             {
@@ -70,30 +76,22 @@ namespace Hector.Data
             }
         }
 
-        public Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public Task<int> ExecuteNonQueryAsync(string commandText, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteNonQueryCoreAsync(new AsyncDaoCommand(commandText, parameters), null, timeoutInSeconds, cancellationToken);
+
+        public Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteNonQueryCoreAsync(new AsyncDaoCommand(queryBuilder.Query, queryBuilder.Parameters), null, timeoutInSeconds, cancellationToken);
+
+        protected async Task<int> ExecuteNonQueryCoreAsync(AsyncDaoCommand asyncDaoCommand, Action<DbCommand>? commandFx = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = GetDbConnection();
-            using DbCommand command = connection.CreateCommand();
+            using DbConnection connection = NewDbConnection();
+            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
+
+            commandFx?.Invoke(command);
 
             try
             {
-                ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
-                return ExecuteNonQueryAsync(connection, command, cancellationToken);
-            }
-            finally
-            {
-                connection.Close();
-            }
-        }
-
-        protected static async Task<int> ExecuteNonQueryAsync(DbConnection connection, DbCommand command, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                if (connection.State == ConnectionState.Closed)
-                {
-                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                }
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                 int result = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 return result;
@@ -105,14 +103,15 @@ namespace Hector.Data
         }
 
         public Task<T[]> ExecuteSelectQueryAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
-            ExecuteSelectQueryAsync<T>(NewQueryBuilder(query, parameters), timeoutInSeconds, cancellationToken);
+            ExecuteSelectQueryCoreAsync<T>(new AsyncDaoCommand(query, parameters), timeoutInSeconds, cancellationToken);
 
-        public async Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
+        public Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) =>
+            ExecuteSelectQueryCoreAsync<T>(new AsyncDaoCommand(queryBuilder.Query, queryBuilder.Parameters), timeoutInSeconds, cancellationToken);
+
+        public async Task<T[]> ExecuteSelectQueryCoreAsync<T>(AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = GetDbConnection();
-            using DbCommand command = connection.CreateCommand();
-
-            ConfigureDbCommand(command, queryBuilder, timeoutInSeconds);
+            using DbConnection connection = NewDbConnection();
+            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
 
             try
             {
@@ -143,26 +142,29 @@ namespace Hector.Data
         public abstract Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
         public abstract Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
 
-        private static void AddParameters(DbCommand command, SqlParameter[] parameters)
+        private static DbCommand NewDbCommand(DbConnection connection, AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds)
         {
-            foreach (SqlParameter queryParam in parameters)
-            {
-                DbParameter param = command.CreateParameter();
-                param.DbType = BaseAsyncDaoHelper.MapTypeToDbType(queryParam.Type);
-                param.ParameterName = queryParam.Name;
-                param.Value = queryParam.Value;
-                command.Parameters.Add(param);
-            }
-        }
-
-        private static void ConfigureDbCommand(DbCommand command, IQueryBuilder builder, int timeoutInSeconds = 30)
-        {
-            command.CommandText = builder.Query;
+            DbCommand command = connection.CreateCommand();
+            command.CommandText = asyncDaoCommand.CommandText;
             command.CommandTimeout = timeoutInSeconds;
-            AddParameters(command, builder.Parameters);
-        }
 
-        protected virtual string GetInsertIntoCommandText(string? schema, string tableName, string fieldNames, string paramNames) =>
-            $" INSERT INTO {schema}{tableName} ({fieldNames}) VALUES ({paramNames})";
+            foreach (SqlParameter queryParam in asyncDaoCommand.Parameters ?? [])
+            {
+                if (queryParam.RawParameter is not null)
+                {
+                    command.Parameters.Add(queryParam.RawParameter);
+                }
+                else
+                {
+                    DbParameter param = command.CreateParameter();
+                    param.DbType = BaseAsyncDaoHelper.MapTypeToDbType(queryParam.Type);
+                    param.ParameterName = queryParam.Name;
+                    param.Value = queryParam.Value;
+                    command.Parameters.Add(param);
+                }
+            }
+
+            return command;
+        }
     }
 }

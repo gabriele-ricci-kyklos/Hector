@@ -1,12 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Hector.Data.Queries
 {
-    public record SqlParameter(Type Type, string Name, object Value);
+    public class SqlParameter
+    {
+        public Type Type { get; }
+        public string Name { get; }
+        public object Value { get; }
+        public DbParameter? RawParameter { get; }
+
+        public SqlParameter(Type type, string name, object value)
+        {
+            Type = type;
+            Name = name;
+            Value = value;
+        }
+
+        public SqlParameter(DbParameter parameter)
+        {
+            RawParameter = parameter;
+            Type = typeof(DbParameter);
+            Name = parameter.ParameterName;
+            Value = parameter.Value;
+        }
+    }
 
     public interface IQueryBuilder
     {
@@ -14,6 +36,7 @@ namespace Hector.Data.Queries
         SqlParameter[] Parameters { get; }
 
         IQueryBuilder SetQuery(string query);
+        IQueryBuilder AddParam(DbParameter param);
         IQueryBuilder AddParam(SqlParameter param);
         IQueryBuilder AddParam(Type type, string name, object value);
         IQueryBuilder AddParam<T>(string name, T value) where T : notnull;
@@ -60,15 +83,21 @@ namespace Hector.Data.Queries
             return this;
         }
 
+        public IQueryBuilder AddParam(DbParameter param)
+        {
+            _parameters.Add(param.ParameterName, new SqlParameter(param));
+            return this;
+        }
+
         public IQueryBuilder AddParam(SqlParameter param)
         {
             _parameters.Add(param.Name, param);
             return this;
         }
 
-        public IQueryBuilder AddParam(Type type, string name, object value) => AddParam(new(type, name, value));
+        public IQueryBuilder AddParam(Type type, string name, object value) => AddParam(new SqlParameter(type, name, value));
 
-        public IQueryBuilder AddParam<T>(string name, T value) where T : notnull => AddParam(new(typeof(T), name, value));
+        public IQueryBuilder AddParam<T>(string name, T value) where T : notnull => AddParam(new SqlParameter(typeof(T), name, value));
 
         public string GetQueryWithReplacedParameters()
         {
