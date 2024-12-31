@@ -111,7 +111,7 @@ namespace Hector.Data.Oracle
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE INTO {Schema}.{_daoHelper.EscapeValue(tableName)} dst
+                MERGE INTO {Schema}{_daoHelper.EscapeValue(tableName)} dst
                 USING
                 (
                     {xmlEntityDefinition}

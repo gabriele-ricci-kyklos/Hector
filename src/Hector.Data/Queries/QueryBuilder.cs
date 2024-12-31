@@ -46,7 +46,7 @@ namespace Hector.Data.Queries
     internal class QueryBuilder : IQueryBuilder
     {
         private readonly IAsyncDaoHelper _asyncDaoHelper;
-        private readonly string? _schema;
+        private readonly string _schema;
         private readonly Dictionary<string, SqlParameter> _parameters;
         private readonly Dictionary<string, string> _sqlFuncMapping;
 
@@ -55,7 +55,7 @@ namespace Hector.Data.Queries
         internal QueryBuilder(IAsyncDaoHelper asyncDaoHelper, string? schema, SqlParameter[]? parameters = null)
         {
             _asyncDaoHelper = asyncDaoHelper;
-            _schema = schema;
+            _schema = schema ?? string.Empty;
             _parameters = parameters?.ToDictionary(x => x.Name) ?? [];
 
             _sqlFuncMapping =
@@ -174,7 +174,6 @@ namespace Hector.Data.Queries
 
             output
                 .Append(_schema)
-                .Append('.')
                 .Append(placeholderValue);
         }
 
@@ -219,7 +218,7 @@ namespace Hector.Data.Queries
                 placeholderValue = _asyncDaoHelper.EscapeValue(placeholderValue);
             }
 
-            placeholderValue = $"{_schema}.{placeholderValue}";
+            placeholderValue = $"{_schema}{placeholderValue}";
 
             string? funcStr = string.Format(_asyncDaoHelper.SequenceValue, placeholderValue);
 

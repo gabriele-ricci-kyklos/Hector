@@ -36,16 +36,30 @@ namespace Hector.Data
     public abstract class BaseAsyncDao : IAsyncDao
     {
         protected readonly IAsyncDaoHelper _daoHelper;
+        protected readonly AsyncDaoOptions _options;
 
         public string ConnectionString { get; }
 
-        public string Schema { get; }
+        private string _schema;
+        public string Schema
+        {
+            get
+            {
+                if (_schema == "-")
+                {
+                    _schema = GetSchema(_options.Schema);
+                }
+
+                return _schema;
+            }
+        }
 
         protected BaseAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper)
         {
             ConnectionString = options.ConnectionString;
-            Schema = options.Schema;
+            _options = options;
             _daoHelper = asyncDaoHelper;
+            _schema = "-";
         }
 
         protected abstract DbConnection NewDbConnection();
@@ -165,6 +179,16 @@ namespace Hector.Data
             }
 
             return command;
+        }
+
+        protected virtual string GetSchema(string rawSchema)
+        {
+            if (rawSchema.IsNullOrBlankString())
+            {
+                return string.Empty;
+            }
+
+            return $"{rawSchema}.";
         }
     }
 }

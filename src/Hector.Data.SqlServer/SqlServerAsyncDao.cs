@@ -88,7 +88,7 @@ namespace Hector.Data.SqlServer
                 $"INSERT ({fieldNames.StringJoin(", ")}) VALUES ({fieldNames.Select(x => $"src.{x}").StringJoin(",")})";
 
             string upsertText = $@"
-                MERGE {Schema}.{_daoHelper.EscapeValue(tableName)} as dst
+                MERGE {Schema}{_daoHelper.EscapeValue(tableName)} as dst
                 USING
                 (
                     SELECT {fieldNames.StringJoin(",")}
@@ -105,7 +105,7 @@ namespace Hector.Data.SqlServer
             SqlParameter p =
                 new("sourceData", SqlDbType.Structured)
                 {
-                    TypeName = $"{Schema}.T_{tableName}",
+                    TypeName = $"{Schema}T_{tableName}",
                     SqlDbType = SqlDbType.Structured,
                     Value = dataReader
                 };
