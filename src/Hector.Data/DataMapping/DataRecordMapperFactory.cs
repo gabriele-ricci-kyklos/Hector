@@ -22,11 +22,11 @@ namespace Hector.Data.DataMapping
             {
                 mapper = new SingleValueDataRecordMapper(type, this);
             }
-            else if (type.IsTypeTuple() || type.IsTypeValueTuple())
+            else if (type.IsTupleType() || type.IsValueTupleType())
             {
                 mapper = new TupleDataRecordMapper(type, this);
             }
-            else if (type.IsTypeDictionary())
+            else if (type.IsDictionaryType())
             {
                 throw new NotSupportedException("A dictionary type is not supported");
             }

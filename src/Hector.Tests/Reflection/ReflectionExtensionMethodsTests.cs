@@ -215,36 +215,61 @@ namespace Hector.Tests.Reflection
         public void TestIsSimpleType()
         {
             typeof(int).IsSimpleType().Should().BeTrue();
+            typeof(Entity).IsSimpleType().Should().BeFalse();
         }
 
         [Fact]
         public void TestGetNonNullableType()
         {
             typeof(int?).GetNonNullableType().Should().Be(typeof(int));
+            typeof(int).GetNonNullableType().Should().Be(typeof(int));
+            typeof(Entity).GetNonNullableType().Should().Be(typeof(Entity));
         }
 
         [Fact]
         public void TestIsNullableType()
         {
             typeof(int?).IsNullableType().Should().BeTrue();
+            typeof(int).IsNullableType().Should().BeFalse();
+            typeof(Entity).IsNullableType().Should().BeFalse();
         }
 
         [Fact]
         public void TestIsNumericType()
         {
             typeof(int).IsNumericType().Should().BeTrue();
+            typeof(string).IsNumericType().Should().BeFalse();
+            typeof(Entity).IsNumericType().Should().BeFalse();
         }
 
         [Fact]
         public void TestIsTypeTuple()
         {
-            typeof(Tuple<int, int>).IsTypeTuple().Should().BeTrue();
+            typeof(Tuple<int, int>).IsTupleType().Should().BeTrue();
+            typeof(ValueTuple<int, int>).IsTupleType().Should().BeFalse();
+            typeof(int).IsTupleType().Should().BeFalse();
         }
 
         [Fact]
         public void TestIsTypeValueTuple()
         {
-            typeof(ValueTuple<int, int>).IsTypeValueTuple().Should().BeTrue();
+            typeof(ValueTuple<int, int>).IsValueTupleType().Should().BeTrue();
+            typeof(Tuple<int, int>).IsValueTupleType().Should().BeFalse();
+            typeof(int).IsValueTupleType().Should().BeFalse();
+        }
+
+        [Fact]
+        public void TestIsDictionaryType()
+        {
+            typeof(Dictionary<int, int>).IsDictionaryType().Should().BeTrue();
+            typeof(List<int>).IsDictionaryType().Should().BeFalse();
+        }
+
+        [Fact]
+        public void TestIsDerivedType()
+        {
+            typeof(ConcreteEntity).IsDerivedType<BaseEntity>().Should().BeTrue();
+            typeof(Entity).IsDerivedType<BaseEntity>().Should().BeFalse();
         }
 
         [Fact]

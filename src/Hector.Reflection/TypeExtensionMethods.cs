@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 
@@ -12,54 +12,135 @@ namespace Hector.Reflection
 
         private static T? GetDefaultGeneric<T>() => default;
 
-        private static bool TypeIsTupleOfSimpleTypes(this Type type)
+        public static bool IsSimpleType(this Type type)
         {
-            var typeArguments = type.GenericTypeArguments;
+            if (!(type == typeof(string)) && !type.GetNonNullableType().IsPrimitive && !type.GetNonNullableType().IsNumericType() && !(type.GetNonNullableType() == typeof(DateTime)))
+            {
+                return type.IsEnum;
+            }
+
+            return true;
+        }
+
+        public static Type GetNonNullableType(this Type type)
+        {
+            if (type.IsNullableType())
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return type;
+        }
+
+        public static bool IsNullableType(this Type? type)
+        {
+            if (type is not null && type!.IsGenericType)
+            {
+                return type!.GetGenericTypeDefinition() == typeof(Nullable<>);
+            }
+
+            return false;
+        }
+
+        public static bool IsNumericType(this Type? type)
+        {
+            TypeCode typeCode = Type.GetTypeCode(type);
+            return ((uint)(typeCode - 4) <= 11u);
+        }
+
+        public static bool IsTupleType(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(Tuple<>)) && !genericTypeDefinition.Equals(typeof(Tuple<,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(Tuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(Tuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].IsTupleType();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsValueTupleType(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (!genericTypeDefinition.Equals(typeof(ValueTuple<>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,>)) && !genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,>)))
+            {
+                if (genericTypeDefinition.Equals(typeof(ValueTuple<,,,,,,,>)))
+                {
+                    return type.GetGenericArguments()[7].IsValueTupleType();
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsTupleOfSimpleTypes(this Type type)
+        {
+            Type[] typeArguments = type.GenericTypeArguments;
 
             return
                 typeArguments.All(x => x.IsSimpleType())
-                && type.IsTypeTuple();
+                && type.IsTupleType();
         }
 
-        private static bool TypeIsValueTupleOfSimpleTypes(this Type type)
+        private static bool IsValueTupleOfSimpleTypes(this Type type)
         {
-            var typeArguments = type.GenericTypeArguments;
+            Type[] typeArguments = type.GenericTypeArguments;
 
             return
                 typeArguments.All(x => x.IsSimpleType())
-                && type.IsTypeValueTuple();
+                && type.IsValueTupleType();
         }
 
-        private static bool TypeIsTupleOfMixedTypes(this Type type)
+        private static bool IsTupleOfMixedTypes(this Type type)
         {
-            var typeArguments = type.GenericTypeArguments;
+            Type[] typeArguments = type.GenericTypeArguments;
 
             return
-                type.IsTypeTuple()
+                type.IsTupleType()
                 && typeArguments.Any(x => x.IsSimpleType())
                 && typeArguments.Any(x => !x.IsSimpleType());
         }
 
-        private static bool TypeIsValueTupleOfMixedTypes(Type type)
+        private static bool IsValueTupleOfMixedTypes(Type type)
         {
-            var typeArguments = type.GenericTypeArguments;
+            Type[] typeArguments = type.GenericTypeArguments;
 
             return
-                type.IsTypeValueTuple()
+                type.IsValueTupleType()
                 && typeArguments.Any(x => x.IsSimpleType())
                 && typeArguments.Any(x => !x.IsSimpleType());
         }
 
-        private static bool TypeIsTupleOrValueTupleOfComplexTypes(Type type)
+        private static bool IsTupleOrValueTupleOfComplexTypes(Type type)
         {
-            var typeArguments = type.GenericTypeArguments;
+            Type[] typeArguments = type.GenericTypeArguments;
 
             return
-                (type.IsTypeTuple() || type.IsTypeValueTuple())
+                (type.IsTupleType() || type.IsValueTupleType())
                 && typeArguments.All(x => !x.IsSimpleType());
         }
 
-        public static bool IsTypeDictionary(this Type type) =>
-            typeof(IDictionary<string, object>).IsAssignableFrom(type);
+        public static bool IsDictionaryType(this Type type) =>
+            type.IsDerivedType<IDictionary>();
+
+        public static bool IsDerivedType<T>(this Type type) =>
+            typeof(T).IsAssignableFrom(type);
     }
 }
