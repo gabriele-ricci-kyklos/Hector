@@ -3,6 +3,7 @@ using Hector.Data.Entities;
 using Hector.Data.Queries;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,8 +28,11 @@ namespace Hector.Data
 
         IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null);
 
+        Task<T?> ExecuteScalarAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<T?> ExecuteScalarAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
+        Task<int> ExecuteNonQueryAsync(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<int> ExecuteNonQueryAsync(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
+        Task<T[]> ExecuteSelectQueryAsync<T>(string query, SqlParameter[]? parameters = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
         Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
@@ -160,6 +164,7 @@ namespace Hector.Data
         private static DbCommand NewDbCommand(DbConnection connection, AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds)
         {
             DbCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
             command.CommandText = asyncDaoCommand.CommandText;
             command.CommandTimeout = timeoutInSeconds;
 

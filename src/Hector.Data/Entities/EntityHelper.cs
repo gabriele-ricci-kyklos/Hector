@@ -17,6 +17,11 @@ namespace Hector.Data.Entities
 
         public static EntityPropertyInfo[] GetEntityPropertyInfoList(Type type)
         {
+            if (!type.IsDerivedType<IBaseEntity>())
+            {
+                throw new NotSupportedException($"The type {type.FullName} is not an {nameof(IBaseEntity)}");
+            }
+
             PropertyInfo[] properties = type.GetPropertyInfoList();
             List<EntityPropertyInfo> results = [];
 
@@ -72,6 +77,40 @@ namespace Hector.Data.Entities
                 .OrderBy(x => x.ColumnOrder)
                 .Select(x => x.ColumnName)
                 .ToArray();
+        }
+
+        public static IEnumerable<Type> GetAllEntityTypesInAssemblyList
+        (
+            this IEnumerable<Assembly> assemblies,
+            Func<Type, EntityInfoAttribute, bool>? predicate = null
+        )
+        {
+            predicate ??= (t, eo) => true;
+
+            var entityTypes =
+                assemblies
+                .SelectMany
+                (x =>
+                    x
+                        .GetTypes()
+                        .AsParallel()
+                        .Where(x => x.IsDerivedType<IBaseEntity>() && x.IsConcreteType())
+                        .Select(x => (EntityType: x, EntityInfo: x.GetAttributeOfType<EntityInfoAttribute>()))
+                        .Where(x => x.EntityInfo is not null)
+                        .Select
+                        (
+                            x =>
+                                new
+                                {
+                                    Entity = x.EntityType,
+                                    x.EntityInfo,
+                                }
+                        )
+                        .Where(x => predicate(x.Entity, x.EntityInfo!))
+                        .Select(x => x.Entity)
+                );
+
+            return entityTypes;
         }
     }
 }

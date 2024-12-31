@@ -1,10 +1,15 @@
 ﻿using FastMember;
+using Hector.Reflection;
 using System;
 
 namespace Hector.Data.Entities
 {
-    public class EntityDefinition<T>
+    public class EntityDefinition<T>() : EntityDefinition(typeof(T))
         where T : IBaseEntity
+    {
+    }
+
+    public class EntityDefinition
     {
         public readonly Type Type;
         public readonly TypeAccessor TypeAccessor;
@@ -12,13 +17,18 @@ namespace Hector.Data.Entities
         public readonly string TableName;
         public readonly string[] PrimaryKeyFields;
 
-        public EntityDefinition()
+        public EntityDefinition(Type type)
         {
-            Type = typeof(T);
-            TypeAccessor = TypeAccessor.Create(Type);
-            PropertyInfoList = EntityHelper.GetEntityPropertyInfoList<T>();
-            TableName = EntityHelper.GetEntityTableName<T>();
-            PrimaryKeyFields = EntityHelper.GetPrimaryKeyFields(Type, PropertyInfoList);
+            if (!type.IsDerivedType<IBaseEntity>())
+            {
+                throw new NotSupportedException($"The type {type.FullName} is not an {nameof(IBaseEntity)}");
+            }
+
+            Type = type;
+            TypeAccessor = TypeAccessor.Create(type);
+            PropertyInfoList = EntityHelper.GetEntityPropertyInfoList(type);
+            TableName = EntityHelper.GetEntityTableName(type);
+            PrimaryKeyFields = EntityHelper.GetPrimaryKeyFields(type, PropertyInfoList);
         }
     }
 }

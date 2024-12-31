@@ -6,23 +6,24 @@ using Hector.Data.SqlServer;
 using Hector.Reflection;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Reflection;
 
 namespace Hector.Tests.Data
 {
     public class SqlServerTests
     {
-        private static SqlServerAsyncDao NewAsyncDao()
+        private static IAsyncDao NewAsyncDao()
         {
             AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
-            SqlServerAsyncDaoHelper daoHelper = new(options.IgnoreEscape);
-            SqlServerAsyncDao dao = new(options, daoHelper);
+            IAsyncDaoHelper daoHelper = new SqlServerAsyncDaoHelper(options.IgnoreEscape);
+            IAsyncDao dao = new SqlServerAsyncDao(options, daoHelper);
             return dao;
         }
 
         [Fact]
-        public async Task TestSqlServerAsyncDao()
+        public async Task TestIAsyncDao()
         {
-            SqlServerAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             IQueryBuilder queryBuilder =
                 dao
@@ -46,7 +47,7 @@ namespace Hector.Tests.Data
         [Fact]
         public async Task TestSqlServerTableType()
         {
-            SqlServerAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             const string sql = @"
 DECLARE @tableType T_Divisions
@@ -67,7 +68,7 @@ SELECT * from @tableType
         [Fact]
         public async Task TestSqlServerUpsert()
         {
-            SqlServerAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             BulkItem[] items =
                 Enumerable
@@ -81,7 +82,7 @@ SELECT * from @tableType
         [Fact]
         public async Task TestSqlServerBulkInsert()
         {
-            SqlServerAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             BulkItem[] items =
                 Enumerable
@@ -95,16 +96,18 @@ SELECT * from @tableType
         [Fact]
         public async Task TestSqlServerScalar()
         {
-            SqlServerAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             int c = await dao.ExecuteScalarAsync<int>(dao.NewQueryBuilder().SetQuery("select count(*) from [BULK]"));
             c.Should().BePositive();
         }
 
         [Fact]
-        public void TestTableTypeDefinition()
+        public async Task TestTableTypeDefinition()
         {
-
+            IAsyncDao dao = NewAsyncDao();
+            TableTypeHelper tableTypeHelper = new(dao);
+            await tableTypeHelper.CreateTableTypesForEntitiesAsync(Assembly.GetExecutingAssembly());
         }
     }
 }
