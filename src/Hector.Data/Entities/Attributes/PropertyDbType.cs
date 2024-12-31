@@ -13,6 +13,7 @@
         Double,
         Decimal,
         DateTime,
+        DateTime2,
         Boolean,
         Blob,
         Clob,

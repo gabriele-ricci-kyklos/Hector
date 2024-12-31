@@ -114,5 +114,6 @@ namespace Hector.Data
         public virtual string BuildParameterName(int i) => $"{ParameterPrefix}P{i}";
 
         public abstract (int? Precision, int? Scale) GetNumericPrecision(EntityPropertyInfo entityPropertyInfo);
+        public abstract string MapDbTypeToSqlType(EntityPropertyInfo propertyInfo);
     }
 }

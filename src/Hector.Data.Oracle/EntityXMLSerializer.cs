@@ -51,7 +51,7 @@ namespace Hector.Data.Oracle
                         {
                             PropertyDbType.DateTime => $"NVARCHAR2(30)",
                             PropertyDbType.Blob or PropertyDbType.ByteArray => "CLOB",
-                            _ => MapDbTypeToSqlType(x)
+                            _ => _daoHelper.MapDbTypeToSqlType(x)
                         };
 
                         return @$"    {x.ColumnName} {typeName} path '{_propertyNameMapping[x.ColumnName]}'";
@@ -148,32 +148,6 @@ COLUMNS
             }
 
             return mapping;
-        }
-
-        private string MapDbTypeToSqlType(EntityPropertyInfo propertyInfo)
-        {
-            (int? precision, int? scale) = _daoHelper.GetNumericPrecision(propertyInfo);
-
-            return
-                propertyInfo.DbType switch
-                {
-                    PropertyDbType.Blob => "BLOB",
-                    PropertyDbType.Boolean => "NUMBER(1, 0)",
-                    PropertyDbType.Byte => "NUMBER(3, 0)",
-                    PropertyDbType.ByteArray => "BLOB",
-                    PropertyDbType.Clob => "NCLOB",
-                    PropertyDbType.DateTime => "DATE",
-                    PropertyDbType.Decimal => "NUMBER(30, 8)",
-                    PropertyDbType.Double => "NUMBER(20, 6)",
-                    PropertyDbType.Float => "NUMBER(15, 4)",
-                    PropertyDbType.Integer => "NUMBER(10, 0)",
-                    PropertyDbType.Long => "NUMBER(20, 0)",
-                    PropertyDbType.None => string.Empty,
-                    PropertyDbType.Short => "NUMBER(5, 0)",
-                    PropertyDbType.String => $"NVARCHAR2({propertyInfo.MaxLength})",
-                    PropertyDbType.Numeric => $"NUMERIC({precision}, {scale})",
-                    _ => string.Empty
-                };
         }
     }
 }

@@ -45,5 +45,31 @@ namespace Hector.Data.SqlServer
                 PropertyDbType.Numeric => (entityPropertyInfo.NumericPrecision, entityPropertyInfo.NumericScale),
                 _ => (null, null)
             };
+
+        public override string MapDbTypeToSqlType(EntityPropertyInfo propertyInfo)
+        {
+            (int? precision, int? scale) = GetNumericPrecision(propertyInfo);
+
+            return
+                propertyInfo.DbType switch
+                {
+                    PropertyDbType.Blob or
+                    PropertyDbType.ByteArray => "VARBINARY(MAX)",
+                    PropertyDbType.Boolean => "BIT",
+                    PropertyDbType.Byte => "TINYINT",
+                    PropertyDbType.Clob => "NVARCHAR(MAX)",
+                    PropertyDbType.DateTime => "DATETIME",
+                    PropertyDbType.DateTime2 => "DATETIME2",
+                    PropertyDbType.Decimal => $"DECIMAL(18, 5)",
+                    PropertyDbType.Double => "FLOAT",
+                    PropertyDbType.Float => "REAL",
+                    PropertyDbType.Integer => "INT",
+                    PropertyDbType.Long => "BIGINT",
+                    PropertyDbType.Short => "SMALLINT",
+                    PropertyDbType.String => $"NVARCHAR({propertyInfo.MaxLength})",
+                    PropertyDbType.Numeric => $"NUMERIC({precision ?? 0}, {scale ?? 0})",
+                    _ => string.Empty
+                };
+        }
     }
 }

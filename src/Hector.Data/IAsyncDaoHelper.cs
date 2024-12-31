@@ -25,5 +25,6 @@ namespace Hector.Data
         string BuildParameterName(int i);
 
         (int? Precision, int? Scale) GetNumericPrecision(EntityPropertyInfo entityPropertyInfo);
+        string MapDbTypeToSqlType(EntityPropertyInfo propertyInfo);
     }
 }

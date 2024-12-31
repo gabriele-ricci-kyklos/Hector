@@ -7,34 +7,7 @@ namespace Hector.Data.Entities.Attributes
     {
         public virtual bool IsNullable { get; set; }
         public virtual string ColumnName { get; set; } = null!;
-
-        private bool _isPrimaryKey;
-        public virtual bool IsPrimaryKey
-        {
-            get { return _isPrimaryKey; }
-            set
-            {
-                if (value && _isRowVersion)
-                {
-                    throw new NotSupportedException("A primary key field cannot be a row version field. Field name: {ColumnName}");
-                }
-                _isPrimaryKey = value;
-            }
-        }
-
-        private bool _isRowVersion;
-        public virtual bool IsRowVersion
-        {
-            get { return _isRowVersion; }
-            set
-            {
-                if (value && _isPrimaryKey)
-                {
-                    throw new NotSupportedException($"A primary key field cannot be a row version field. Field name: {ColumnName}");
-                }
-                _isRowVersion = value;
-            }
-        }
+        public virtual bool IsPrimaryKey { get; set; }
 
         public virtual PropertyDbType DbType { get; set; }
 
@@ -80,14 +53,8 @@ namespace Hector.Data.Entities.Attributes
             }
         }
 
-        public bool ApplyEscape { get; set; }
-
-        public object? DefaultValue { get; set; }
-
         public string? Note { get; set; }
 
         public short ColumnOrder { get; set; }
-
-        public bool IsReadOnly { get; set; }
     }
 }
