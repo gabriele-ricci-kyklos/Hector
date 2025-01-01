@@ -67,6 +67,7 @@ namespace Hector.Data.SqlServer
                 return;
             }
 
+            //TODO: do in transaction in order to rollback all in case of errors
             await _dao
                 .ExecuteNonQueryAsync(commandBuilder.ToString(), null, timeoutInSeconds, cancellationToken)
                 .ConfigureAwait(false);
@@ -85,7 +86,39 @@ namespace Hector.Data.SqlServer
                 EntityHelper
                     .GetAllEntityTypesInAssemblyList(assemblies, predicate);
 
-            await CreateTableTypesForEntitiesAsync(entityTypes, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+            Dictionary<string, Type> mapTableToTypeDict =
+                entityTypes
+                    .ToDictionary(x => EntityHelper.GetEntityTableName(x));
+
+            TableTypeDetailModel[] currentDbItemDetailsModels =
+                GetTableTypeDetailModelsFromAssemblies(entityTypes);
+
+            TableTypeDetailModel[] existingTableTypeDetailsModels =
+                await GetExistingTableTypesDetailsModels(mapTableToTypeDict).ConfigureAwait(false);
+
+            var differences =
+                currentDbItemDetailsModels
+                    .Except(existingTableTypeDetailsModels);
+
+            Type[] tableTypesDifferences =
+                differences
+                    .Select(x => x.DbItemType)
+                    .Distinct()
+                    .ToArray();
+
+            await CreateTableTypesForEntitiesAsync(tableTypesDifferences, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
+
+            //if (tableTypesDifferences.Length > 0)
+            //{
+            //    await _dao
+            //        .ExecuteTransactionAsync
+            //        (async tdao =>
+            //        {
+            //            await tdao.DropTableTypesForEntitiesAsync(tableTypesDifferences).ConfigureAwait(false);
+            //            await tdao.CreateSqlServerTypesFromLoadedAssembliesAsync(tableTypesDifferences).ConfigureAwait(false);
+            //        })
+            //        .ConfigureAwait(false);
+            //}
         }
 
         private async Task<TableTypeDetailDbItem[]> GetExistingTableTypesDetailsAsync()
@@ -155,7 +188,7 @@ where t.is_table_type = 1";
             return existingTableTypeDetailsModels.ToArray();
         }
 
-        private TableTypeDetailModel[] GetTableTypeDetailModelsFromAssemblies(Type[] currentDbItemTypes)
+        private TableTypeDetailModel[] GetTableTypeDetailModelsFromAssemblies(IEnumerable<Type> currentDbItemTypes)
         {
             List<TableTypeDetailModel> currentDbItemDetails = [];
 
@@ -205,6 +238,7 @@ where t.is_table_type = 1";
                 "bigint" => typeof(long),
                 "smallint" => typeof(short),
                 "nvarchar" => typeof(string),
+                "varchar" => typeof(string),
                 "numeric" => typeof(double),
                 _ => throw new NotSupportedException(),
             };
@@ -232,6 +266,4 @@ where t.is_table_type = 1";
         [EntityPropertyInfo(ColumnName = "IsNullable", DbType = PropertyDbType.Boolean, IsNullable = true, ColumnOrder = 50)]
         public bool IsNullable { get; set; }
     }
-
-
 }
