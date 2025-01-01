@@ -10,7 +10,7 @@ namespace Hector.Data.DataMapping
     internal class EntityDataRecordMapper : BaseDataRecordMapper
     {
         private readonly TypeAccessor _typeAccessor;
-        private readonly Dictionary<string, string> _propertiesMapping;
+        private readonly Dictionary<string, EntityPropertyInfo> _propertiesMapping;
         private readonly ObjectConstructor _typeConstructorDelegate;
 
         public override int FieldsCount => _propertiesMapping.Count;
@@ -18,14 +18,12 @@ namespace Hector.Data.DataMapping
         public EntityDataRecordMapper(Type type, DataRecordMapperFactory mapperFactory)
             : base(type, mapperFactory)
         {
-            _typeAccessor =
-                TypeAccessor
-                    .Create(_type, true);
+            _typeAccessor = TypeAccessor.Create(_type);
 
             _propertiesMapping =
                 EntityHelper
                     .GetEntityPropertyInfoList(_type)
-                    .ToDictionary(x => x.ColumnName, x => x.PropertyName);
+                    .ToDictionary(x => x.ColumnName);
 
             _typeConstructorDelegate = ObjectActivator.CreateILConstructorDelegate(_type);
         }
@@ -36,12 +34,12 @@ namespace Hector.Data.DataMapping
 
             for (int i = 0; i < records.Length; ++i)
             {
-                if (!_propertiesMapping.TryGetValue(records[i].Name, out string? propertyName))
+                if (!_propertiesMapping.TryGetValue(records[i].Name, out EntityPropertyInfo? propertyInfo))
                 {
                     continue;
                 }
 
-                _typeAccessor[resultObj, propertyName] = records[i].Value;
+                _typeAccessor[resultObj, propertyInfo.PropertyName] = records[i].Value?.ConvertTo(propertyInfo.Type);
             }
 
             return resultObj;

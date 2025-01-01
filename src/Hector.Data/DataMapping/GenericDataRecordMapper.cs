@@ -3,13 +3,13 @@ using System.Data;
 
 namespace Hector.Data.DataMapping
 {
-    public class DataRecord
+    internal class DataRecord
     {
-        public string Name { get; set; }
-        public object RawValue { get; set; }
-        public object? Value { get; set; }
+        internal string Name { get; set; }
+        internal object RawValue { get; set; }
+        internal object? Value { get; set; }
 
-        public DataRecord(string name, object value)
+        internal DataRecord(string name, object value)
         {
             Name = name;
             RawValue = value;
