@@ -13,12 +13,10 @@ namespace Hector.Data.Oracle
 {
     public class OracleAsyncDao : BaseAsyncDao
     {
-        public OracleAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper)
-            : base(options, asyncDaoHelper)
+        public OracleAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)
+            : base(options, asyncDaoHelper, connectionFactory)
         {
         }
-
-        protected override DbConnection NewDbConnection() => new OracleConnection(ConnectionString);
 
         public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
@@ -137,5 +135,8 @@ namespace Hector.Data.Oracle
             int affectedRecords = await ExecuteNonQueryCoreAsync(cmd, null, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
         }
+
+        public override ITransactionalAsyncDao NewTransactionalAsyncDao(DbConnectionContext connectionContext) =>
+            new OracleTransactionalAsyncDao(connectionContext, _options, DaoHelper, _connectionFactory);
     }
 }

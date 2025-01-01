@@ -9,6 +9,11 @@ namespace Hector.Data.SqlServer
             services
                 .AddSingletonOption<AsyncDaoOptions>()
                 .AddSingleton<IAsyncDaoHelper, SqlServerAsyncDaoHelper>()
-                .AddSingleton<IAsyncDao, SqlServerAsyncDao>();
+                .AddSingleton<IAsyncDao, SqlServerAsyncDao>()
+                .AddSingleton<IDbConnectionFactory, SqlServerDbConnectionFactory>(provider =>
+                {
+                    AsyncDaoOptions asyncDaoOptions = provider.GetRequiredService<AsyncDaoOptions>();
+                    return new SqlServerDbConnectionFactory(asyncDaoOptions.ConnectionString);
+                });
     }
 }

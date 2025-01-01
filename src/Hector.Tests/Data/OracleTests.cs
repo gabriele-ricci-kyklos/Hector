@@ -8,18 +8,19 @@ namespace Hector.Tests.Data
 {
     public class OracleTests
     {
-        private static OracleAsyncDao NewAsyncDao()
+        private static IAsyncDao NewAsyncDao()
         {
             AsyncDaoOptions options = new("Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=172.16.10.53)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=rmxora)));User Id=RMX;Password=RMX;", "RMX", false);
-            OracleAsyncDaoHelper daoHelper = new(options.IgnoreEscape);
-            OracleAsyncDao dao = new(options, daoHelper);
+            IAsyncDaoHelper daoHelper = new OracleAsyncDaoHelper(options.IgnoreEscape);
+            IDbConnectionFactory connectionFactory = new OracleDbConnectionFactory(options.ConnectionString);
+            IAsyncDao dao = new OracleAsyncDao(options, daoHelper, connectionFactory);
             return dao;
         }
 
         [Fact]
         public async Task TestOracleBulkInsertRaw()
         {
-            OracleAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
             using OracleConnection conn = new(dao.ConnectionString);
             await conn.OpenAsync();
 
@@ -44,7 +45,7 @@ namespace Hector.Tests.Data
         [Fact]
         public async Task TestOracleBulkInsert()
         {
-            OracleAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             BulkItem[] items =
                 Enumerable
@@ -58,7 +59,7 @@ namespace Hector.Tests.Data
         [Fact]
         public async Task TestOracleUpsert()
         {
-            OracleAsyncDao dao = NewAsyncDao();
+            IAsyncDao dao = NewAsyncDao();
 
             BulkItem[] items =
                 Enumerable

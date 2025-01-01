@@ -16,7 +16,8 @@ namespace Hector.Tests.Data
         {
             AsyncDaoOptions options = new("Data Source=kkritstgdb.kyklos.local;Initial Catalog=Remira_Dev_JEK;Persist Security Info=True;User Id=rit-stg-mix;Password=3VCjmnxQxJVnDQxpHg2s;TrustServerCertificate=True", "dbo", false);
             IAsyncDaoHelper daoHelper = new SqlServerAsyncDaoHelper(options.IgnoreEscape);
-            IAsyncDao dao = new SqlServerAsyncDao(options, daoHelper);
+            IDbConnectionFactory connectionFactory = new SqlServerDbConnectionFactory(options.ConnectionString);
+            IAsyncDao dao = new SqlServerAsyncDao(options, daoHelper, connectionFactory);
             return dao;
         }
 
@@ -98,8 +99,22 @@ SELECT * from @tableType
         {
             IAsyncDao dao = NewAsyncDao();
 
-            int c = await dao.ExecuteScalarAsync<int>(dao.NewQueryBuilder().SetQuery("select count(*) from [BULK]"));
+            int c = await dao.ExecuteScalarAsync<int>("select count(*) from [BULK]");
             c.Should().BePositive();
+        }
+
+        [Fact]
+        public async Task TestSqlServerTransaction()
+        {
+            IAsyncDao dao = NewAsyncDao();
+
+            await dao
+                .ExecuteInTransactionAsync
+                (async tdao =>
+                {
+                    await tdao.ExecuteNonQueryAsync("update [bulk] set code = 'lol' where id = 1").ConfigureAwait(false);
+                    await tdao.ExecuteNonQueryAsync("update [bulk] set code = 'lol' where id = 2").ConfigureAwait(false);
+                });
         }
 
         [Fact]

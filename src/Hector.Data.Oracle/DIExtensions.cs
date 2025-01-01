@@ -9,6 +9,11 @@ namespace Hector.Data.Oracle
             services
                 .AddSingletonOption<AsyncDaoOptions>()
                 .AddSingleton<IAsyncDaoHelper, OracleAsyncDaoHelper>()
-                .AddSingleton<IAsyncDao, OracleAsyncDao>();
+                .AddSingleton<IAsyncDao, OracleAsyncDao>()
+                .AddSingleton<IDbConnectionFactory, OracleDbConnectionFactory>(provider =>
+                {
+                    AsyncDaoOptions asyncDaoOptions = provider.GetRequiredService<AsyncDaoOptions>();
+                    return new OracleDbConnectionFactory(asyncDaoOptions.ConnectionString);
+                });
     }
 }

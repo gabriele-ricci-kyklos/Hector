@@ -14,26 +14,25 @@ namespace Hector.Data.SqlServer
 {
     public class SqlServerAsyncDao : BaseAsyncDao
     {
-        public SqlServerAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper)
-            : base(options, asyncDaoHelper)
+        public SqlServerAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)
+            : base(options, asyncDaoHelper, connectionFactory)
         {
         }
 
-        protected override DbConnection NewDbConnection() => new SqlConnection(ConnectionString);
-
         public override async Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = NewDbConnection();
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            using DbConnectionContext connectionContext = NewConnectionContext();
 
             try
             {
+                await connectionContext.OpenAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+
                 using DbDataReader reader =
                     (items is T[])
                         ? new ArrayDbDataReader<T>(items.ToArray())
                         : new EnumerableDbDataReader<T>(items);
 
-                using SqlBulkCopy bcp = new(connection as SqlConnection);
+                using SqlBulkCopy bcp = new(connectionContext.DbConnection as SqlConnection);
                 bcp.DestinationTableName = tableName ?? EntityHelper.GetEntityTableName<T>();
                 bcp.BatchSize = batchSize;
                 bcp.BulkCopyTimeout = timeoutInSeconds;
@@ -44,7 +43,7 @@ namespace Hector.Data.SqlServer
             }
             finally
             {
-                connection.Close();
+                await connectionContext.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -115,5 +114,8 @@ namespace Hector.Data.SqlServer
             int affectedRecords = await ExecuteNonQueryCoreAsync(cmd, null, timeoutInSeconds, cancellationToken).ConfigureAwait(false);
             return affectedRecords;
         }
+
+        public override ITransactionalAsyncDao NewTransactionalAsyncDao(DbConnectionContext connectionContext) =>
+            new SqlServerTransactionalAsyncDao(connectionContext, _options, DaoHelper, _connectionFactory);
     }
 }

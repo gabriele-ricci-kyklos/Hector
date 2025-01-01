@@ -17,7 +17,12 @@ namespace Hector.Data
         bool IgnoreEscape
     );
 
-    public record AsyncDaoCommand(string CommandText, SqlParameter[]? Parameters);
+    public record AsyncDaoCommand
+    (
+        string CommandText,
+        SqlParameter[]? Parameters,
+        IsolationLevel IsolationLevel = IsolationLevel.ReadCommitted
+    );
 
     public interface IAsyncDao
     {
@@ -36,11 +41,18 @@ namespace Hector.Data
         Task<T[]> ExecuteSelectQueryAsync<T>(IQueryBuilder queryBuilder, int timeoutInSeconds = 30, CancellationToken cancellationToken = default);
         Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
         Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
+        Task ExecuteInTransactionAsync(Func<ITransactionalAsyncDao, Task> action, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default);
+    }
+
+    public interface ITransactionalAsyncDao : IAsyncDao
+    {
+        public DbConnectionContext ConnectionContext { get; }
     }
 
     public abstract class BaseAsyncDao : IAsyncDao
     {
         protected readonly AsyncDaoOptions _options;
+        protected readonly IDbConnectionFactory _connectionFactory;
 
         public IAsyncDaoHelper DaoHelper { get; }
         public string ConnectionString { get; }
@@ -59,15 +71,16 @@ namespace Hector.Data
             }
         }
 
-        protected BaseAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper)
+        protected BaseAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)
         {
             ConnectionString = options.ConnectionString;
             DaoHelper = asyncDaoHelper;
             _options = options;
             _schema = "-";
+            _connectionFactory = connectionFactory;
         }
 
-        protected abstract DbConnection NewDbConnection();
+        protected virtual DbConnectionContext NewConnectionContext() => new(_connectionFactory);
 
         public IQueryBuilder NewQueryBuilder(string query = "", SqlParameter[]? parameters = null) => new QueryBuilder(DaoHelper, Schema, parameters).SetQuery(query);
 
@@ -79,19 +92,20 @@ namespace Hector.Data
 
         protected async Task<T?> ExecuteScalarCoreAsync<T>(AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = NewDbConnection();
-            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
+            using DbConnectionContext connectionContext = NewConnectionContext();
 
             try
             {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                await connectionContext.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                using DbCommand command = connectionContext.NewDbCommand(connectionContext.DbConnection, asyncDaoCommand, timeoutInSeconds);
 
                 object? result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
                 return (T?)result;
             }
             finally
             {
-                connection.Close();
+                await connectionContext.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -103,21 +117,30 @@ namespace Hector.Data
 
         protected async Task<int> ExecuteNonQueryCoreAsync(AsyncDaoCommand asyncDaoCommand, Action<DbCommand>? commandFx = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = NewDbConnection();
-            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
-
-            commandFx?.Invoke(command);
+            using DbConnectionContext connectionContext = NewConnectionContext();
 
             try
             {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                await connectionContext.OpenInTransactionAsync(asyncDaoCommand.IsolationLevel, cancellationToken).ConfigureAwait(false);
+
+                using DbCommand command = connectionContext.NewDbCommand(connectionContext.DbConnection, asyncDaoCommand, timeoutInSeconds);
+
+                commandFx?.Invoke(command);
 
                 int result = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+                await connectionContext.CommitAsync().ConfigureAwait(false);
+
                 return result;
+            }
+            catch (Exception)
+            {
+                await connectionContext.RollbackAsync().ConfigureAwait(false);
+                throw;
             }
             finally
             {
-                connection.Close();
+                await connectionContext.CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -129,12 +152,12 @@ namespace Hector.Data
 
         public async Task<T[]> ExecuteSelectQueryCoreAsync<T>(AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds = 30, CancellationToken cancellationToken = default)
         {
-            using DbConnection connection = NewDbConnection();
-            using DbCommand command = NewDbCommand(connection, asyncDaoCommand, timeoutInSeconds);
+            using DbConnectionContext connectionContext = NewConnectionContext();
+            using DbCommand command = connectionContext.NewDbCommand(connectionContext.DbConnection, asyncDaoCommand, timeoutInSeconds);
 
             try
             {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                await connectionContext.OpenAsync(cancellationToken).ConfigureAwait(false);
                 using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
                 List<T> results = [];
@@ -154,37 +177,37 @@ namespace Hector.Data
             }
             finally
             {
-                connection.Close();
+                await connectionContext.CloseAsync().ConfigureAwait(false);
             }
         }
 
         public abstract Task<int> ExecuteBulkCopyAsync<T>(IEnumerable<T> items, string? tableName = null, int batchSize = 0, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
         public abstract Task<int> ExecuteUpsertAsync<T>(IEnumerable<T> items, string? tableName = null, int timeoutInSeconds = 30, CancellationToken cancellationToken = default) where T : IBaseEntity;
 
-        private static DbCommand NewDbCommand(DbConnection connection, AsyncDaoCommand asyncDaoCommand, int timeoutInSeconds)
+        public abstract ITransactionalAsyncDao NewTransactionalAsyncDao(DbConnectionContext connectionContext);
+
+        public async Task ExecuteInTransactionAsync(Func<ITransactionalAsyncDao, Task> action, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default)
         {
-            DbCommand command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = asyncDaoCommand.CommandText;
-            command.CommandTimeout = timeoutInSeconds;
+            using DbConnectionContext connectionContext = NewConnectionContext();
 
-            foreach (SqlParameter queryParam in asyncDaoCommand.Parameters ?? [])
+            try
             {
-                if (queryParam.RawParameter is not null)
-                {
-                    command.Parameters.Add(queryParam.RawParameter);
-                }
-                else
-                {
-                    DbParameter param = command.CreateParameter();
-                    param.DbType = BaseAsyncDaoHelper.MapTypeToDbType(queryParam.Type);
-                    param.ParameterName = queryParam.Name;
-                    param.Value = queryParam.Value;
-                    command.Parameters.Add(param);
-                }
-            }
+                await connectionContext.OpenInTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
 
-            return command;
+                ITransactionalAsyncDao transactionalAsyncDao = NewTransactionalAsyncDao(connectionContext);
+                await action(transactionalAsyncDao).ConfigureAwait(false);
+
+                await connectionContext.CommitAsync().ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                await connectionContext.RollbackAsync().ConfigureAwait(false);
+                throw;
+            }
+            finally
+            {
+                await connectionContext.CloseAsync().ConfigureAwait(false);
+            }
         }
 
         protected virtual string GetSchema(string rawSchema)
