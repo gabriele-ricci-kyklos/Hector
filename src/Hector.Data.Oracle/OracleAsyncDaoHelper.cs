@@ -53,7 +53,7 @@ namespace Hector.Data.Oracle
         {
             (int? precision, int? scale) = GetNumericPrecision(propertyInfo);
 
-            return 
+            return
                 propertyInfo.DbType switch
                 {
                     PropertyDbType.Blob => "BLOB",
