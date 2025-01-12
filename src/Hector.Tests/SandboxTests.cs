@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
 
@@ -25,12 +26,36 @@ namespace Hector.Tests
         }
     }
 
-    record struct Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, Channel<TValue> Sender);
+    record Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, Channel<TValue> Sender);
+
+    class CacheItem<T>
+    {
+        private readonly DateTime _creationDate;
+        private readonly T _value;
+
+        private DateTime _lastAccess;
+
+        public T Value
+        {
+            get
+            {
+                _lastAccess = DateTime.Now.ToUniversalTime();
+                return _value;
+            }
+        }
+
+        public CacheItem(T value)
+        {
+            _value = value;
+            _creationDate = DateTime.Now.ToUniversalTime();
+            _lastAccess = _creationDate;
+        }
+    }
 
     public sealed class Cache<TKey, TValue> : IDisposable where TKey : notnull
     {
         private readonly Channel<Message<TKey, TValue>> _channel;
-        private readonly ConcurrentDictionary<TKey, TValue> _cache = [];
+        private readonly ConcurrentDictionary<TKey, CacheItem<TValue>> _cache = [];
         private readonly Lazy<ValueTask> _consumer;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
@@ -55,9 +80,9 @@ namespace Hector.Tests
 
         public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
-            if (_cache.TryGetValue(key, out TValue? value))
+            if (_cache.TryGetValue(key, out CacheItem<TValue>? cacheItem))
             {
-                return value;
+                return cacheItem.Value;
             }
 
             Channel<TValue> self =
@@ -82,24 +107,30 @@ namespace Hector.Tests
             }
 
             await self.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false);
-            if (!self.Reader.TryRead(out value))
+            if (!self.Reader.TryRead(out TValue? item))
             {
                 throw new Exception($"Unable to create a value for the key {key}");
             }
 
-            return value;
+            return item;
         }
 
         private async ValueTask ConsumeAsync(CancellationToken cancellationToken)
         {
             while (await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                while (_channel.Reader.TryRead(out Message<TKey, TValue> msg))
+                while (_channel.Reader.TryRead(out Message<TKey, TValue>? msg))
                 {
-                    if (!_cache.TryGetValue(msg.Key, out TValue? value))
+                    TValue value;
+                    if (!_cache.TryGetValue(msg.Key, out CacheItem<TValue>? cacheItem))
                     {
                         value = await msg.Factory(cancellationToken).ConfigureAwait(false);
-                        _cache.TryAdd(msg.Key, value);
+                        cacheItem = new CacheItem<TValue>(value);
+                        _cache.TryAdd(msg.Key, cacheItem);
+                    }
+                    else
+                    {
+                        value = cacheItem.Value;
                     }
 
                     await msg.Sender.Writer.WriteAsync(value, cancellationToken).ConfigureAwait(false);
