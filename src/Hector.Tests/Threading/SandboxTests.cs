@@ -8,10 +8,10 @@ namespace Hector.Tests
         [Fact]
         public async Task TestCaching()
         {
-            using MemCache<int, string> cache = new(100000);
+            using MemCache<int, string> cache = new(10);
             Stopwatch sw = Stopwatch.StartNew();
 
-            foreach (int i in Enumerable.Range(0, 100000))
+            foreach (int i in Enumerable.Range(0, 10))
             {
                 _ = cache.GetOrCreateAsync(i, (c) => { return ValueTask.FromResult("lol"); });
             }
@@ -19,8 +19,9 @@ namespace Hector.Tests
             sw.Stop();
             var elapsed = sw.ElapsedMilliseconds;
 
-            await cache.GetOrCreateAsync(2, (c) => ValueTask.FromResult("asd"));
-            await cache.GetOrCreateAsync(2, (c) => ValueTask.FromResult("asd"));
+            await cache.GetOrCreateAsync(100001, (c) => ValueTask.FromResult("asd"));
+            await cache.GetOrCreateAsync(100002, (c) => ValueTask.FromResult("asd"));
+            bool x = true;
         }
     }
 }

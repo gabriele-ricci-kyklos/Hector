@@ -149,9 +149,12 @@ namespace Hector.Threading.Caching
                         if (!TryGetValue(msg.Key, out TValue? cacheItemValue))
                         {
                             // Check and evict before adding new item
+                            ValueTask<TValue> factoryTask = msg.Factory(cancellationToken);
+
                             TryEvictOldestIfNeeded();
 
-                            value = await msg.Factory(cancellationToken).ConfigureAwait(false);
+                            value = await factoryTask.ConfigureAwait(false);
+
                             _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
                         }
                         else
@@ -190,9 +193,7 @@ namespace Hector.Threading.Caching
 
         private void TryEvictOldestIfNeeded()
         {
-            int capacityExceeded = _cache.Count - Capacity;
-
-            if (Capacity <= 0 || capacityExceeded < 0)
+            if (Capacity <= 0 || _cache.Count - Capacity < 0)
             {
                 return;
             }
@@ -208,7 +209,7 @@ namespace Hector.Threading.Caching
             foreach (var item in _cache)
             {
                 // If the set contains less than 'x' elements, just add the new date
-                if (oldestDates.Count < capacityExceeded)
+                if (oldestDates.Count < (_cache.Count - Capacity + 1))
                 {
                     oldestDates.Add((item.Key, item.Value.LastAccess));
                 }
