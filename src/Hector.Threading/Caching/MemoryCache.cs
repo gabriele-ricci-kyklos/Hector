@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Threading;
-using System.Collections.Generic;
 
 namespace Hector.Threading.Caching
 {
@@ -192,7 +190,9 @@ namespace Hector.Threading.Caching
 
         private void TryEvictOldestIfNeeded()
         {
-            if (Capacity <= 0 || _cache.Count < Capacity)
+            int capacityExceeded = _cache.Count - Capacity;
+
+            if (Capacity <= 0 || capacityExceeded < 0)
             {
                 return;
             }
@@ -202,20 +202,32 @@ namespace Hector.Threading.Caching
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
-            // Find the oldest item
-            KeyValuePair<TKey, ICacheItem<TValue>>? oldest = null;
+            // Use a SortedSet to maintain a collection of the x smallest dates (oldest)
+            SortedSet<(TKey Key, DateTime LastAccess)> oldestDates = new(new KeyLastAccessComparer());
+
             foreach (var item in _cache)
             {
-                if (oldest == null || item.Value.LastAccess < oldest.Value.Value.LastAccess)
+                // If the set contains less than 'x' elements, just add the new date
+                if (oldestDates.Count < capacityExceeded)
                 {
-                    oldest = item;
+                    oldestDates.Add((item.Key, item.Value.LastAccess));
+                }
+                else
+                {
+                    // If the set contains 'x' elements, only add if the current date is earlier
+                    if (item.Value.LastAccess < oldestDates.Max.LastAccess)
+                    {
+                        oldestDates.Remove(oldestDates.Max); // Remove the largest (max) element
+                        oldestDates.Add((item.Key, item.Value.LastAccess)); // Add the new smaller date
+                    }
                 }
             }
 
-            // Remove the oldest item if found
-            if (oldest.HasValue)
+            // Find the oldest item
+            KeyValuePair<TKey, ICacheItem<TValue>>? oldest = null;
+            foreach ((TKey key, _) in oldestDates)
             {
-                _cache.TryRemove(oldest.Value.Key, out _);
+                _cache.TryRemove(key, out _);
             }
         }
 
@@ -235,6 +247,11 @@ namespace Hector.Threading.Caching
             }
 
             _cancellationTokenSource.Dispose();
+        }
+
+        private class KeyLastAccessComparer : IComparer<(TKey, DateTime)>
+        {
+            public int Compare((TKey, DateTime) x, (TKey, DateTime) y) => x.Item2.CompareTo(y.Item2);
         }
     }
 }
