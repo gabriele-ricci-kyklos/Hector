@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Hector.Threading.Caching
 {
@@ -19,8 +20,9 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
         private readonly Lazy<ValueTask> _consumer;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly ConcurrentDictionary<TKey, TaskCompletionSource<Result<TValue>>> _pendingRequests = new();
-        private readonly TimeSpan? _timeToLive;
+        private readonly TimeSpan _evictionInterval;
+        private readonly Task _evictionTask;
+        private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
         public readonly int MaxPoolSize;
@@ -28,7 +30,7 @@ namespace Hector.Threading.Caching
 
         public int Count => _cache.Count;
 
-        public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null) // Default to 0 for unbounded channels
+        public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null, bool throwIfCapacityExceeded = false) // Default to 0 for unbounded channels
         {
             if (capacity <= 0)
             {
@@ -60,6 +62,10 @@ namespace Hector.Threading.Caching
             Capacity = capacity;
             MaxPoolSize = maxPoolSize;
             TimeToLive = timeToLive ?? TimeSpan.FromMinutes(5);
+
+            _evictionInterval = new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
+            _evictionTask = Task.Run(() => EvictExpiredItemsAsync(_cancellationTokenSource.Token));
+            _throwIfCapacityExceeded = throwIfCapacityExceeded;
         }
 
         public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
@@ -69,8 +75,7 @@ namespace Hector.Threading.Caching
                 return cacheItem.Value;
             }
 
-            // If not in cache, check if there's a pending request for the key
-            TaskCompletionSource<Result<TValue>> self = _pendingRequests.GetOrAdd(key, _ => new());
+            TaskCompletionSource<Result<TValue>> self = new();
 
             Message<TKey, TValue> msg = new(key, valueFactory, self);
             await _channel.Writer.WriteAsync(msg, cancellationToken).ConfigureAwait(false);
@@ -140,6 +145,9 @@ namespace Hector.Threading.Caching
                     {
                         if (!TryGetValue(msg.Key, out TValue? cacheItemValue))
                         {
+                            // Check and evict before adding new item
+                            TryEvictOldestIfNeeded();
+
                             value = await msg.Factory(cancellationToken).ConfigureAwait(false);
                             _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
                         }
@@ -155,9 +163,54 @@ namespace Hector.Threading.Caching
                     finally
                     {
                         msg.Sender.SetResult(new Result<TValue>(value!, error));
-                        _pendingRequests.TryRemove(msg.Key, out _);
                     }
                 }
+            }
+        }
+
+        private async Task EvictExpiredItemsAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(_evictionInterval, cancellationToken).ConfigureAwait(false);
+
+                foreach (var kvp in _cache)
+                {
+                    if (kvp.Value.IsExpired())
+                    {
+                        // Directly remove the item if it's expired
+                        _cache.TryRemove(kvp.Key, out _);
+                    }
+                }
+            }
+        }
+
+        private void TryEvictOldestIfNeeded()
+        {
+            if (Capacity <= 0 || _cache.Count < Capacity)
+            {
+                return;
+            }
+
+            if (_throwIfCapacityExceeded)
+            {
+                throw new IndexOutOfRangeException("The capacity has been exceeded");
+            }
+
+            // Find the oldest item
+            KeyValuePair<TKey, ICacheItem<TValue>>? oldest = null;
+            foreach (var item in _cache)
+            {
+                if (oldest == null || item.Value.LastAccess < oldest.Value.Value.LastAccess)
+                {
+                    oldest = item;
+                }
+            }
+
+            // Remove the oldest item if found
+            if (oldest.HasValue)
+            {
+                _cache.TryRemove(oldest.Value.Key, out _);
             }
         }
 
@@ -170,6 +223,7 @@ namespace Hector.Threading.Caching
             try
             {
                 _consumer.Value.GetAwaiter().GetResult();
+                _evictionTask.GetAwaiter().GetResult();
             }
             catch (OperationCanceledException)
             {
