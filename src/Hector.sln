@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{02C5F1F6
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{949AEFDF-4834-4597-A739-4766DD10B1A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hector.Advanced", "Hector.Advanced\Hector.Advanced.csproj", "{0533ECBC-E342-49A8-9CF6-80888A8E286A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{6B4EC4EB-ADF1-4EEF-BF81-430E34FF08DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B4EC4EB-ADF1-4EEF-BF81-430E34FF08DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B4EC4EB-ADF1-4EEF-BF81-430E34FF08DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0533ECBC-E342-49A8-9CF6-80888A8E286A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0533ECBC-E342-49A8-9CF6-80888A8E286A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0533ECBC-E342-49A8-9CF6-80888A8E286A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0533ECBC-E342-49A8-9CF6-80888A8E286A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
