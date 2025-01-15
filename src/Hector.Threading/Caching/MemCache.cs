@@ -116,6 +116,9 @@ namespace Hector.Threading.Caching
             return false;
         }
 
+        public bool TryRemove(TKey key) => _cache.TryRemove(key, out _);
+        public void Clear() => _cache.Clear();
+
         private async ValueTask ConsumeAsync(CancellationToken cancellationToken)
         {
             bool isBounded = _channel.Reader.GetType().Name == "BoundedChannelReader";
