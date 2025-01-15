@@ -223,12 +223,12 @@ namespace Hector.Threading.Caching
                 }
             }
 
-            // Find the oldest item
-            KeyValuePair<TKey, ICacheItem<TValue>>? oldest = null;
             foreach ((TKey key, _) in oldestDates)
             {
                 _cache.TryRemove(key, out _);
             }
+
+            oldestDates.Clear();
         }
 
         public void Dispose()
