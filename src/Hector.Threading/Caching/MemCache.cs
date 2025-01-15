@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Threading;
@@ -70,9 +72,9 @@ namespace Hector.Threading.Caching
 
         public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
-            if (_cache.TryGetValue(key, out ICacheItem<TValue>? cacheItem))
+            if (TryGetValue(key, out TValue? cacheItemValue))
             {
-                return cacheItem.Value;
+                return cacheItemValue!;
             }
 
             TaskCompletionSource<Result<TValue>> self = new();
