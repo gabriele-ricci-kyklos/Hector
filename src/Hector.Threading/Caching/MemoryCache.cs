@@ -20,17 +20,17 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
         private readonly Lazy<ValueTask> _consumer;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly TimeSpan _evictionInterval;
         private readonly Task _evictionTask;
         private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
         public readonly int MaxPoolSize;
         public readonly TimeSpan TimeToLive;
+        public readonly TimeSpan EvictionInterval;
 
         public int Count => _cache.Count;
 
-        public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null, bool throwIfCapacityExceeded = false) // Default to 0 for unbounded channels
+        public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null, TimeSpan? evictionInterval = null, bool throwIfCapacityExceeded = false) // Default to 0 for unbounded channels
         {
             if (capacity <= 0)
             {
@@ -62,8 +62,8 @@ namespace Hector.Threading.Caching
             Capacity = capacity;
             MaxPoolSize = maxPoolSize;
             TimeToLive = timeToLive ?? TimeSpan.FromMinutes(5);
+            EvictionInterval = evictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
 
-            _evictionInterval = new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
             _evictionTask = Task.Run(() => EvictExpiredItemsAsync(_cancellationTokenSource.Token));
             _throwIfCapacityExceeded = throwIfCapacityExceeded;
         }
@@ -175,7 +175,7 @@ namespace Hector.Threading.Caching
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(_evictionInterval, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
 
                 foreach (var kvp in _cache)
                 {
