@@ -1,6 +1,7 @@
 ﻿using FastMember;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -91,7 +92,7 @@ namespace Hector.Reflection
         }
 
         public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
-            type.GetAttributeOfType<TAttrib>() is not null;
+            type.IsDefined(typeof(ReadOnlyAttribute), true);
 
         public static TAttrib? GetAttributeOfType<TAttrib>(this Type type)
             where TAttrib : Attribute =>
