@@ -19,6 +19,7 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Task _evictionTask;
+        private readonly Task _channelPoolCleanupTask;
         private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
@@ -38,6 +39,7 @@ namespace Hector.Threading.Caching
             EvictionInterval = evictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
 
             _evictionTask = Task.Run(() => EvictExpiredItemsAsync(_cancellationTokenSource.Token));
+            _channelPoolCleanupTask = Task.Run(() => CleanChannelPoolAsync(_cancellationTokenSource.Token));
             _throwIfCapacityExceeded = throwIfCapacityExceeded;
         }
 
@@ -135,6 +137,27 @@ namespace Hector.Threading.Caching
             }
         }
 
+        private async Task CleanChannelPoolAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+
+                foreach (CacheChannel<TKey, TValue> channel in _channelPool.Values)
+                {
+                    try
+                    {
+                        channel.Complete();
+                        channel.Stop();
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Ignore cancellation exceptions during cleanup
+                    }
+                }
+            }
+        }
+
         private void TryEvictOldestIfNeeded()
         {
             if (Capacity <= 0 || _cache.Count - Capacity < 0)
@@ -193,21 +216,29 @@ namespace Hector.Threading.Caching
                 }
                 catch (TaskCanceledException)
                 {
+                    // Ignore cancellation exceptions during cleanup
                 }
             }
 
             _channelPool.Clear();
             _cache.Clear();
 
+            StopTask(_evictionTask);
+            StopTask(_channelPoolCleanupTask);
+
+            _cancellationTokenSource.Dispose();
+        }
+
+        private static void StopTask(Task task)
+        {
             try
             {
-                _evictionTask.GetAwaiter().GetResult();
+                task.GetAwaiter().GetResult();
             }
             catch (TaskCanceledException)
             {
+                // Ignore cancellation exceptions during cleanup
             }
-
-            _cancellationTokenSource.Dispose();
         }
 
         private class KeyLastAccessComparer : IComparer<(TKey, DateTime)>
