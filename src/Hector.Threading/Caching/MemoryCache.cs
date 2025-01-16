@@ -17,6 +17,7 @@ namespace Hector.Threading.Caching
     {
         private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
+        private readonly ConcurrentQueue<TKey> _accessQueue = [];
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Task _evictionTask;
         private readonly Task _channelPoolCleanupTask;
@@ -77,9 +78,13 @@ namespace Hector.Threading.Caching
                 }
                 else
                 {
-                    _cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem);
-                    value = cacheItem.Value;
-                    return true;
+                    if (_cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem))
+                    {
+                        // Track the new access
+                        _accessQueue.Enqueue(key);
+                        value = cacheItem.Value;
+                        return true;
+                    }
                 }
             }
 
@@ -158,6 +163,7 @@ namespace Hector.Threading.Caching
             }
         }
 
+        //TODO: make thread safe, the count _cache.Count - Capacity must be locked
         private void TryEvictOldestIfNeeded()
         {
             if (Capacity <= 0 || _cache.Count - Capacity < 0)
@@ -170,33 +176,18 @@ namespace Hector.Threading.Caching
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
-            // Use a SortedSet to maintain a collection of the x smallest dates (oldest)
-            SortedSet<(TKey Key, DateTime LastAccess)> oldestDates = new(new KeyLastAccessComparer());
+            int removedKeysCount = 0, itemsToRemoveCount = _cache.Count - Capacity + 1;
 
-            foreach (var item in _cache)
+            while (removedKeysCount++ < itemsToRemoveCount && _accessQueue.TryDequeue(out TKey? key))
             {
-                // If the set contains less than 'x' elements, just add the new date
-                if (oldestDates.Count < (_cache.Count - Capacity + 1))
+                if (!_cache.ContainsKey(key))
                 {
-                    oldestDates.Add((item.Key, item.Value.LastAccess));
+                    itemsToRemoveCount++;
+                    continue;
                 }
-                else
-                {
-                    // If the set contains 'x' elements, only add if the current date is earlier
-                    if (item.Value.LastAccess < oldestDates.Max.LastAccess)
-                    {
-                        oldestDates.Remove(oldestDates.Max); // Remove the largest (max) element
-                        oldestDates.Add((item.Key, item.Value.LastAccess)); // Add the new smaller date
-                    }
-                }
-            }
 
-            foreach ((TKey key, _) in oldestDates)
-            {
                 _cache.TryRemove(key, out _);
             }
-
-            oldestDates.Clear();
         }
 
         public void Dispose()
