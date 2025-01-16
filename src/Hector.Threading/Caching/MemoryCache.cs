@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Hector.Threading.Caching
@@ -16,9 +15,8 @@ namespace Hector.Threading.Caching
 
     public sealed class MemCache<TKey, TValue> : IDisposable where TKey : notnull
     {
-        private readonly Channel<Message<TKey, TValue>> _channel;
+        private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
-        private readonly Lazy<ValueTask> _consumer;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Task _evictionTask;
         private readonly bool _throwIfCapacityExceeded;
@@ -32,32 +30,7 @@ namespace Hector.Threading.Caching
 
         public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null, TimeSpan? evictionInterval = null, bool throwIfCapacityExceeded = false) // Default to 0 for unbounded channels
         {
-            if (capacity <= 0)
-            {
-                // Unbounded channel (no backpressure, can grow indefinitely)
-                _channel = Channel.CreateUnbounded<Message<TKey, TValue>>(
-                    new UnboundedChannelOptions
-                    {
-                        AllowSynchronousContinuations = true,
-                        SingleReader = true,
-                        SingleWriter = false
-                    });
-            }
-            else
-            {
-                // Bounded channel (with backpressure strategy: Wait Until Space Available)
-                _channel = Channel.CreateBounded<Message<TKey, TValue>>(
-                    new BoundedChannelOptions(capacity)
-                    {
-                        FullMode = BoundedChannelFullMode.Wait, // Wait for space to become available
-                        SingleReader = true,
-                        SingleWriter = false,
-                        AllowSynchronousContinuations = true
-                    });
-            }
-
             _cancellationTokenSource = new CancellationTokenSource();
-            _consumer = new Lazy<ValueTask>(() => ConsumeAsync(_cancellationTokenSource.Token));
 
             Capacity = capacity;
             MaxPoolSize = maxPoolSize;
@@ -68,7 +41,7 @@ namespace Hector.Threading.Caching
             _throwIfCapacityExceeded = throwIfCapacityExceeded;
         }
 
-        public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
+        public async Task<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
             if (TryGetValue(key, out TValue? cacheItemValue))
             {
@@ -76,14 +49,11 @@ namespace Hector.Threading.Caching
             }
 
             TaskCompletionSource<Result<TValue>> self = new();
+            CacheChannel<TKey, TValue> channel = GetCacheChannel(key);
+            channel.Start();
 
             Message<TKey, TValue> msg = new(key, valueFactory, self);
-            await _channel.Writer.WriteAsync(msg, cancellationToken).ConfigureAwait(false);
-
-            if (!_consumer.IsValueCreated)
-            {
-                _ = _consumer.Value;
-            }
+            await channel.WriteAsync(msg, cancellationToken).ConfigureAwait(false);
 
             Result<TValue> result = await self.Task.ConfigureAwait(false);
             if (result.Error is not null)
@@ -117,62 +87,36 @@ namespace Hector.Threading.Caching
         public bool TryRemove(TKey key) => _cache.TryRemove(key, out _);
         public void Clear() => _cache.Clear();
 
-        private async ValueTask ConsumeAsync(CancellationToken cancellationToken)
-        {
-            bool isBounded = _channel.Reader.GetType().Name == "BoundedChannelReader";
-
-            while (true)
-            {
-                if (isBounded)
-                {
-                    // For bounded channel, wait for a read without passing the cancellation token (for backpressure management).
-                    if (!await _channel.Reader.WaitToReadAsync().ConfigureAwait(false))
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    // For unbounded channel, pass cancellation token to respect graceful cancellation.
-                    if (!await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        break;
-                    }
-                }
-
-                while (_channel.Reader.TryRead(out Message<TKey, TValue>? msg))
-                {
-                    TValue? value = default;
-                    Exception? error = null;
-                    try
-                    {
-                        if (!TryGetValue(msg.Key, out TValue? cacheItemValue))
+        private CacheChannel<TKey, TValue> GetCacheChannel(TKey key) =>
+            _channelPool
+                .GetOrAdd(key,
+                _ =>
+                    new
+                    (
+                        async msg =>
                         {
-                            // Check and evict before adding new item
-                            ValueTask<TValue> factoryTask = msg.Factory(cancellationToken);
+                            TValue? value;
+                            if (!TryGetValue(msg.Key, out TValue? cacheItemValue))
+                            {
+                                // Check and evict before adding new item
+                                ValueTask<TValue> factoryTask = msg.Factory(_cancellationTokenSource.Token);
 
-                            TryEvictOldestIfNeeded();
+                                TryEvictOldestIfNeeded();
 
-                            value = await factoryTask.ConfigureAwait(false);
+                                value = await factoryTask.ConfigureAwait(false);
 
-                            _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
-                        }
-                        else
-                        {
-                            value = cacheItemValue;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        error = ex;
-                    }
-                    finally
-                    {
-                        msg.Sender.SetResult(new Result<TValue>(value!, error));
-                    }
-                }
-            }
-        }
+                                _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
+                            }
+                            else
+                            {
+                                value = cacheItemValue;
+                            }
+
+                            return value;
+                        },
+                        _cancellationTokenSource.Token
+                    )
+                );
 
         private async Task EvictExpiredItemsAsync(CancellationToken cancellationToken)
         {
@@ -234,16 +178,32 @@ namespace Hector.Threading.Caching
 
         public void Dispose()
         {
-            _channel.Writer.Complete();
-            _cache.Clear();
+            foreach (CacheChannel<TKey, TValue> item in _channelPool.Values)
+            {
+                item.Complete();
+            }
+
             _cancellationTokenSource.Cancel();
+
+            foreach (CacheChannel<TKey, TValue> item in _channelPool.Values)
+            {
+                try
+                {
+                    item.Stop();
+                }
+                catch (TaskCanceledException)
+                {
+                }
+            }
+
+            _channelPool.Clear();
+            _cache.Clear();
 
             try
             {
-                _consumer.Value.GetAwaiter().GetResult();
                 _evictionTask.GetAwaiter().GetResult();
             }
-            catch (OperationCanceledException)
+            catch (TaskCanceledException)
             {
             }
 
