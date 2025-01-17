@@ -36,25 +36,8 @@ namespace Hector.Threading.Caching
         {
             bool isBounded = _channel.Reader.GetType().Name == "BoundedChannelReader";
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested && await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                if (isBounded)
-                {
-                    // For bounded channel, wait for a read without passing the cancellation token (for backpressure management).
-                    if (!await _channel.Reader.WaitToReadAsync().ConfigureAwait(false))
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    // For unbounded channel, pass cancellation token to respect graceful cancellation.
-                    if (!await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        break;
-                    }
-                }
-
                 while (_channel.Reader.TryRead(out Message<TKey, TValue>? msg))
                 {
                     TValue? value = default;
