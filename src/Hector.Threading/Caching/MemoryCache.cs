@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,6 +20,7 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
         private readonly ConcurrentQueue<TKey> _accessQueue = [];
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly AsyncLock _evictionLock = new();
         private readonly Task _evictionTask;
         private readonly Task _channelPoolCleanupTask;
         private readonly bool _throwIfCapacityExceeded;
@@ -78,13 +80,9 @@ namespace Hector.Threading.Caching
                 }
                 else
                 {
-                    if (_cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem))
-                    {
-                        // Track the new access
-                        _accessQueue.Enqueue(key);
-                        value = cacheItem.Value;
-                        return true;
-                    }
+                    _cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem);
+                    value = cacheItem.Value;
+                    return true;
                 }
             }
 
@@ -108,11 +106,16 @@ namespace Hector.Threading.Caching
                                 // Check and evict before adding new item
                                 ValueTask<TValue> factoryTask = msg.Factory(_cancellationTokenSource.Token);
 
-                                TryEvictOldestIfNeeded();
+                                await TryEvictOldestIfNeededAsync().ConfigureAwait(false);
 
                                 value = await factoryTask.ConfigureAwait(false);
 
                                 _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
+
+                                if (Capacity > 0)
+                                {
+                                    _accessQueue.Enqueue(msg.Key);
+                                }
                             }
                             else
                             {
@@ -163,10 +166,15 @@ namespace Hector.Threading.Caching
             }
         }
 
-        //TODO: make thread safe, the count _cache.Count - Capacity must be locked
-        private void TryEvictOldestIfNeeded()
+        private async ValueTask TryEvictOldestIfNeededAsync()
         {
-            if (Capacity <= 0 || _cache.Count - Capacity < 0)
+            if (Capacity <= 0)
+            {
+                return;
+            }
+
+            // Quick check before taking lock - optimization
+            if (_cache.Count - Capacity < 0)
             {
                 return;
             }
@@ -176,17 +184,26 @@ namespace Hector.Threading.Caching
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
-            int removedKeysCount = 0, itemsToRemoveCount = _cache.Count - Capacity + 1;
-
-            while (removedKeysCount++ < itemsToRemoveCount && _accessQueue.TryDequeue(out TKey? key))
+            using (await _evictionLock.LockAsync())
             {
-                if (!_cache.ContainsKey(key))
+                // Re-check after acquiring lock
+                if (_cache.Count - Capacity < 0)
                 {
-                    itemsToRemoveCount++;
-                    continue;
+                    return;
                 }
 
-                _cache.TryRemove(key, out _);
+                int removedKeysCount = 0, itemsToRemoveCount = _cache.Count - Capacity + 1;
+
+                while (removedKeysCount++ <= itemsToRemoveCount && _accessQueue.TryDequeue(out TKey? key))
+                {
+                    if (!_cache.ContainsKey(key))
+                    {
+                        itemsToRemoveCount++;
+                        continue;
+                    }
+
+                    _cache.TryRemove(key, out _);
+                }
             }
         }
 

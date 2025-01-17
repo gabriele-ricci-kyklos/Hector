@@ -8,7 +8,7 @@ namespace Hector.Tests
         [Fact]
         public async Task TestCaching()
         {
-            using MemCache<int, string> cache = new();
+            using MemCache<int, string> cache = new(1);
             long startTime = Stopwatch.GetTimestamp();
 
             List<Task> tasks = [];
@@ -21,14 +21,8 @@ namespace Hector.Tests
 
             TimeSpan elapsedTime = Stopwatch.GetElapsedTime(startTime);
 
-            //Stopwatch sw = Stopwatch.StartNew();
-
-            //var t1 = cache.GetOrCreateAsync(1, async (c) => { await Task.Delay(5000, c); return "lol"; });
-            //var t2 = cache.GetOrCreateAsync(2, async (c) => { await Task.Delay(5000, c); return "asd"; });
-
-            //await Task.WhenAll(t1.AsTask(), t2.AsTask());
-
-            //var elapsed = sw.ElapsedMilliseconds;
+            //await cache.GetOrCreateAsync(1, c => ValueTask.FromResult("lol"));
+            //await cache.GetOrCreateAsync(2, c => ValueTask.FromResult("asd"));
 
             bool x = true;
         }
