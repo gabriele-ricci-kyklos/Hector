@@ -13,6 +13,14 @@ namespace Hector.Threading.Caching
     {
     }
 
+    public record MemCacheOptions
+    (
+        int Capacity = 0,
+        TimeSpan? TimeToLive = null,
+        TimeSpan? EvictionInterval = null,
+        bool ThrowIfCapacityExceeded = false
+    );
+
     public sealed class MemCache<TKey, TValue> : IDisposable where TKey : notnull
     {
         private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
@@ -24,23 +32,21 @@ namespace Hector.Threading.Caching
         private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
-        public readonly int MaxPoolSize;
         public readonly TimeSpan TimeToLive;
         public readonly TimeSpan EvictionInterval;
 
         public int Count => _cache.Count;
 
-        public MemCache(int capacity = 0, int maxPoolSize = 100, TimeSpan? timeToLive = null, TimeSpan? evictionInterval = null, bool throwIfCapacityExceeded = false) // Default to 0 for unbounded channels
+        public MemCache(MemCacheOptions options)
         {
             _cancellationTokenSource = new CancellationTokenSource();
 
-            Capacity = capacity;
-            MaxPoolSize = maxPoolSize;
-            TimeToLive = timeToLive ?? TimeSpan.FromMinutes(5);
-            EvictionInterval = evictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
+            Capacity = options.Capacity;
+            TimeToLive = options.TimeToLive ?? TimeSpan.FromMinutes(5);
+            EvictionInterval = options.EvictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); // 10%
 
             _backgroundTask = Task.Run(() => DoBackgroundWorkAsync(_cancellationTokenSource.Token));
-            _throwIfCapacityExceeded = throwIfCapacityExceeded;
+            _throwIfCapacityExceeded = options.ThrowIfCapacityExceeded;
         }
 
         public async Task<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
