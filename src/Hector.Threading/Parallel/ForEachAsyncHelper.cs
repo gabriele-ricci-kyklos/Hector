@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hector.Parallelism
+namespace Hector.Threading.Parallel
 {
     internal class ForEachAsyncHelper
     {
-        internal static Task Parallel_ForEachAsync<TSource>(IEnumerable<TSource> source, ParallelOptions parallelOptions, Func<TSource, CancellationToken, Task> body)
+        internal static Task Parallel_ForEachAsync<TSource>(IEnumerable<TSource> source, ParallelOptions parallelOptions, Func<TSource, CancellationToken, ValueTask> body)
         {
 #if NET5_0_OR_GREATER
-            return Parallel.ForEachAsync(source, parallelOptions, (x, c) => new ValueTask(body(x, c)));
+            return System.Threading.Tasks.Parallel.ForEachAsync(source, parallelOptions, body);
 #else
             return Parallel_ForEachAsync_NetStandard(source, parallelOptions, body);
 #endif
@@ -19,7 +19,7 @@ namespace Hector.Parallelism
         //Credits: https://stackoverflow.com/a/65251949/4499267
         internal static Task Parallel_ForEachAsync_NetStandard<T>(IEnumerable<T> source,
     ParallelOptions parallelOptions,
-    Func<T, CancellationToken, Task> body)
+    Func<T, CancellationToken, ValueTask> body)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (parallelOptions == null) throw new ArgumentNullException("parallelOptions");
@@ -32,9 +32,9 @@ namespace Hector.Parallelism
             IEnumerator<T> enumerator = source.GetEnumerator();
             CancellationTokenSource cts = CancellationTokenSource
                 .CreateLinkedTokenSource(cancellationToken);
-            var semaphore = new SemaphoreSlim(1, 1); // Synchronizes the enumeration
-            var workerTasks = new Task[dop];
-            for (int i = 0; i < dop; i++)
+            SemaphoreSlim semaphore = new(1, 1); // Synchronizes the enumeration
+            Task[] workerTasks = new Task[dop];
+            for (int i = 0; i < dop; ++i)
             {
                 workerTasks[i] = Task.Factory.StartNew(async () =>
                 {

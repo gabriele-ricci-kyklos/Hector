@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hector.Parallelism
+namespace Hector.Threading.Parallel
 {
     public class ParallelLockManager<TKey>(int initialCount = 1, int maxCount = 1) : IDisposable
         where TKey : notnull

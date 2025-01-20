@@ -133,7 +133,7 @@
   <ItemGroup>
     <Compile Include="Core\Collections\CollectionTests.cs" />
     <Compile Include="Core\Compression\CompressionTests.cs" />
-    <Compile Include="Core\Parallelism\ParallelismTests.cs" />
+    <Compile Include="Threading\Parallel\ParallelTests.cs" />
     <Compile Include="Reflection\ReflectionExtensionMethodsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -145,6 +145,10 @@
     <ProjectReference Include="..\Hector.Reflection\Hector.Reflection.csproj">
       <Project>{7e4bc71f-582d-416f-92fc-6330feea7025}</Project>
       <Name>Hector.Reflection</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Hector.Threading\Hector.Threading.csproj">
+      <Project>{d959dec4-cc10-45c8-811b-c45ad01fbee0}</Project>
+      <Name>Hector.Threading</Name>
     </ProjectReference>
     <ProjectReference Include="..\Hector\Hector.csproj">
       <Project>{5d0af362-6ccc-440b-b2da-0dc9268dd0f2}</Project>

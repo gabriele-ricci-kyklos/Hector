@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
-using Hector.Parallelism;
+using Hector.Threading.Parallel;
 
-namespace Hector.Tests.Core.Parallelism
+namespace Hector.Tests.Threading
 {
-    public class ParallelismTests
+    public class ParallelTests
     {
         [Fact]
         public async Task TestParallelLockManager()
@@ -40,7 +40,7 @@ namespace Hector.Tests.Core.Parallelism
                         (a, b) =>
                         {
                             int[] r = [1, 2];
-                            return Task.FromResult(r);
+                            return ValueTask.FromResult(r);
                         }
                     );
 

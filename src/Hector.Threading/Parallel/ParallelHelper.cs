@@ -5,14 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hector.Parallelism
+namespace Hector.Threading.Parallel
 {
     public class ParallelHelper
     {
-        public static Task<Dictionary<TKey, TResult[]>> DoInParallelColletingResultsAsync<TKey, TResult>(TKey[] models, Func<TKey, CancellationToken, Task<TResult[]>> actionTask, int degreeOfParallelism = 5)
+        public static Task<Dictionary<TKey, TResult[]>> DoInParallelColletingResultsAsync<TKey, TResult>(TKey[] models, Func<TKey, CancellationToken, ValueTask<TResult[]>> actionTask, int degreeOfParallelism = 5)
             where TKey : notnull
         {
-            Func<TKey, ConcurrentDictionary<TKey, TResult[]>, CancellationToken, Task> action =
+            Func<TKey, ConcurrentDictionary<TKey, TResult[]>, CancellationToken, ValueTask> action =
                 async (x, y, z) =>
                 {
                     TResult[] res = await actionTask(x, z);
@@ -22,7 +22,7 @@ namespace Hector.Parallelism
             return DoInParallelColletingResultsAsync(models, action, degreeOfParallelism);
         }
 
-        public static async Task<Dictionary<TKey, TResult[]>> DoInParallelColletingResultsAsync<TKey, TResult>(TKey[] models, Func<TKey, ConcurrentDictionary<TKey, TResult[]>, CancellationToken, Task> actionTask, int degreeOfParallelism = 5)
+        public static async Task<Dictionary<TKey, TResult[]>> DoInParallelColletingResultsAsync<TKey, TResult>(TKey[] models, Func<TKey, ConcurrentDictionary<TKey, TResult[]>, CancellationToken, ValueTask> actionTask, int degreeOfParallelism = 5)
             where TKey : notnull
         {
             ConcurrentDictionary<TKey, TResult[]> resultDataDict = new(degreeOfParallelism, models.Length);

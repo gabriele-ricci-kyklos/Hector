@@ -1,12 +1,12 @@
 ﻿using FluentAssertions;
-using Hector.Parallelism;
+using Hector.Threading.Parallel;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Hector.Tests.NetFramework.Core.Parallelism
 {
-    public class ParallelismTests
+    public class ParallelTests
     {
         [Fact]
         public async Task TestDoInParallelColletingResultsAsync()
@@ -18,10 +18,11 @@ namespace Hector.Tests.NetFramework.Core.Parallelism
                     .DoInParallelColletingResultsAsync
                     (
                         models.ToArray(),
-                        (a, b) =>
+                        async (a, b) =>
                         {
                             int[] r = new int[] { 1, 2 };
-                            return Task.FromResult(r);
+                            await Task.Delay(10);
+                            return r;
                         }
                     );
 
