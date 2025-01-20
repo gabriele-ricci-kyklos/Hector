@@ -1,7 +1,6 @@
 ﻿using Nito.AsyncEx;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,8 +20,7 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentQueue<TKey> _accessQueue = [];
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly AsyncLock _evictionLock = new();
-        private readonly Task _evictionTask;
-        private readonly Task _channelPoolCleanupTask;
+        private readonly Task _backgroundTask;
         private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
@@ -41,8 +39,7 @@ namespace Hector.Threading.Caching
             TimeToLive = timeToLive ?? TimeSpan.FromMinutes(5);
             EvictionInterval = evictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); //10 %
 
-            _evictionTask = Task.Run(() => EvictExpiredItemsAsync(_cancellationTokenSource.Token));
-            _channelPoolCleanupTask = Task.Run(() => CleanChannelPoolAsync(_cancellationTokenSource.Token));
+            _backgroundTask = Task.Run(() => DoBackgroundWorkAsync(_cancellationTokenSource.Token));
             _throwIfCapacityExceeded = throwIfCapacityExceeded;
         }
 
@@ -127,6 +124,14 @@ namespace Hector.Threading.Caching
                         _cancellationTokenSource.Token
                     )
                 );
+
+        private Task DoBackgroundWorkAsync(CancellationToken cancellationToken)
+        {
+            Task evictionTask = EvictExpiredItemsAsync(cancellationToken);
+            Task cleaningTask = CleanChannelPoolAsync(cancellationToken);
+
+            return Task.WhenAll(evictionTask, cleaningTask);
+        }
 
         private async Task EvictExpiredItemsAsync(CancellationToken cancellationToken)
         {
@@ -231,8 +236,7 @@ namespace Hector.Threading.Caching
             _channelPool.Clear();
             _cache.Clear();
 
-            StopTask(_evictionTask);
-            StopTask(_channelPoolCleanupTask);
+            StopTask(_backgroundTask);
 
             _cancellationTokenSource.Dispose();
         }
@@ -247,11 +251,6 @@ namespace Hector.Threading.Caching
             {
                 // Ignore cancellation exceptions during cleanup
             }
-        }
-
-        private class KeyLastAccessComparer : IComparer<(TKey, DateTime)>
-        {
-            public int Compare((TKey, DateTime) x, (TKey, DateTime) y) => x.Item2.CompareTo(y.Item2);
         }
     }
 }
