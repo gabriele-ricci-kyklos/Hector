@@ -92,7 +92,13 @@ namespace Hector.Threading.Caching
             return false;
         }
 
-        public bool TryRemove(TKey key) => _cache.TryRemove(key, out _);
+        public bool TryRemove(TKey key, out TValue? value)
+        {
+            bool removed = _cache.TryRemove(key, out ICacheItem<TValue>? cacheItem);
+            value = removed ? cacheItem!.Value : default;
+            return removed;
+        }
+        
         public void Clear() => _cache.Clear();
 
         public bool TryAdd(TKey key, TValue value)
