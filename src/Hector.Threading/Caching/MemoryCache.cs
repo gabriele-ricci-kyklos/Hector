@@ -95,6 +95,16 @@ namespace Hector.Threading.Caching
         public bool TryRemove(TKey key) => _cache.TryRemove(key, out _);
         public void Clear() => _cache.Clear();
 
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (Capacity > 0)
+            {
+                _accessQueue.Enqueue(key);
+            }
+
+            return _cache.TryAdd(key, CacheItem.Create(value, TimeToLive));
+        }
+
         private CacheChannel<TKey, TValue> GetCacheChannel(TKey key) =>
             _channelPool
                 .GetOrAdd(key,
