@@ -92,7 +92,10 @@ namespace Hector.Reflection
         }
 
         public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
-            type.IsDefined(typeof(ReadOnlyAttribute), true);
+            HasAttribute(type, typeof(TAttrib));
+
+        public static bool HasAttribute(this Type type, Type attributeType) =>
+            type.IsDefined(attributeType, true);
 
         public static TAttrib? GetAttributeOfType<TAttrib>(this Type type)
             where TAttrib : Attribute =>
