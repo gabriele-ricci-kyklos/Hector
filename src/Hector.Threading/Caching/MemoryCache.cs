@@ -52,13 +52,17 @@ namespace Hector.Threading.Caching
                 .Select(x => x.Value)
                 .ToArray();
 
+        public MemCache() : this(new MemCacheOptions())
+        {
+        }
+
         public MemCache(MemCacheOptions options)
         {
             _cancellationTokenSource = new();
 
             Capacity = options.Capacity;
             TimeToLive = options.TimeToLive ?? TimeSpan.FromMinutes(5);
-            EvictionInterval = options.EvictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); // 10%
+            EvictionInterval = options.EvictionInterval ?? new TimeSpan(Math.Max(new TimeSpan(TimeToLive.Ticks / 100L * 10).Ticks, TimeSpan.FromMilliseconds(300).Ticks)); // 10%
 
             _backgroundTask = Task.Run(() => DoBackgroundWorkAsync());
             ThrowIfCapacityExceeded = options.ThrowIfCapacityExceeded;
@@ -72,7 +76,7 @@ namespace Hector.Threading.Caching
                 return cacheItemValue!;
             }
 
-            if (ThrowIfCapacityExceeded)
+            if (ThrowIfCapacityExceeded && _cache.Count - Capacity == 0)
             {
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
@@ -152,7 +156,7 @@ namespace Hector.Threading.Caching
 
         public bool TryAdd(TKey key, TValue value)
         {
-            if (ThrowIfCapacityExceeded)
+            if (ThrowIfCapacityExceeded && _cache.Count - Capacity == 0)
             {
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
@@ -328,11 +332,11 @@ namespace Hector.Threading.Caching
 
                 int removedKeysCount = 0, itemsToRemoveCount = _cache.Count - Capacity + 1;
 
-                while (removedKeysCount++ <= itemsToRemoveCount && _addedItemsQueue.TryDequeue(out TKey? key))
+                while (removedKeysCount++ < itemsToRemoveCount && _addedItemsQueue.TryDequeue(out TKey? key))
                 {
                     if (!_cache.ContainsKey(key))
                     {
-                        itemsToRemoveCount++;
+                        removedKeysCount--;
                         continue;
                     }
 
