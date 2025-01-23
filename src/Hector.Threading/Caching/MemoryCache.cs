@@ -151,6 +151,8 @@ namespace Hector.Threading.Caching
             return false;
         }
 
+        public bool ContainsKey(TKey key) => _cache.ContainsKey(key);
+
         private CacheChannel<TKey, TValue> GetCacheChannel(TKey key) =>
             _channelPool
                 .GetOrAdd(key,
