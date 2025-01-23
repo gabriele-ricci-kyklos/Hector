@@ -19,10 +19,12 @@ namespace Hector.Threading.Caching
         int Capacity = 0,
         TimeSpan? TimeToLive = null,
         TimeSpan? EvictionInterval = null,
-        bool ThrowIfCapacityExceeded = false
+        bool ThrowIfCapacityExceeded = false,
+        bool SlidingExpiration = false
     );
 
-    public sealed class MemCache<TKey, TValue> : IDisposable where TKey : notnull
+    public sealed class MemCache<TKey, TValue> : IDisposable
+        where TKey : notnull
     {
         private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
@@ -31,11 +33,12 @@ namespace Hector.Threading.Caching
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly AsyncLock _evictionLock = new();
         private readonly Task _backgroundTask;
-        private readonly bool _throwIfCapacityExceeded;
 
         public readonly int Capacity;
         public readonly TimeSpan TimeToLive;
         public readonly TimeSpan EvictionInterval;
+        public readonly bool ThrowIfCapacityExceeded;
+        public readonly bool SlidingExpiration;
 
         public int Count => _cache.Count;
 
@@ -48,7 +51,8 @@ namespace Hector.Threading.Caching
             EvictionInterval = options.EvictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); // 10%
 
             _backgroundTask = Task.Run(() => DoBackgroundWorkAsync(_cancellationTokenSource.Token));
-            _throwIfCapacityExceeded = options.ThrowIfCapacityExceeded;
+            ThrowIfCapacityExceeded = options.ThrowIfCapacityExceeded;
+            SlidingExpiration = options.SlidingExpiration;
         }
 
         public async Task<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
@@ -56,6 +60,11 @@ namespace Hector.Threading.Caching
             if (TryGetValue(key, out TValue? cacheItemValue))
             {
                 return cacheItemValue!;
+            }
+
+            if (ThrowIfCapacityExceeded)
+            {
+                throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
             TaskCompletionSource<Result<TValue>> self = new();
@@ -106,12 +115,17 @@ namespace Hector.Threading.Caching
 
         public bool TryAdd(TKey key, TValue value)
         {
+            if (ThrowIfCapacityExceeded)
+            {
+                throw new IndexOutOfRangeException("The capacity has been exceeded");
+            }
+
             if (Capacity > 0)
             {
                 _addedItemsQueue.Enqueue(key);
             }
 
-            return _cache.TryAdd(key, CacheItem.Create(value, TimeToLive));
+            return _cache.TryAdd(key, CacheItem.Create(value, TimeToLive, SlidingExpiration));
         }
 
         private CacheChannel<TKey, TValue> GetCacheChannel(TKey key) =>
@@ -132,7 +146,7 @@ namespace Hector.Threading.Caching
 
                                 value = await factoryTask.ConfigureAwait(false);
 
-                                _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive));
+                                _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive, SlidingExpiration));
 
                                 if (Capacity > 0)
                                 {
@@ -226,20 +240,11 @@ namespace Hector.Threading.Caching
 
         private async ValueTask TryEvictOldestIfNeededAsync()
         {
-            if (Capacity <= 0)
+            if (Capacity <= 0
+                || ThrowIfCapacityExceeded
+                || _cache.Count - Capacity < 0)
             {
                 return;
-            }
-
-            // Quick check before taking lock - optimization
-            if (_cache.Count - Capacity < 0)
-            {
-                return;
-            }
-
-            if (_throwIfCapacityExceeded)
-            {
-                throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
             using (await _evictionLock.LockAsync())

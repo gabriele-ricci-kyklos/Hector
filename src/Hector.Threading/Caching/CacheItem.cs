@@ -5,15 +5,17 @@ namespace Hector.Threading.Caching
     interface ICacheItem<T>
     {
         T Value { get; }
-        DateTime LastAccess { get; }
+        DateTime CreationTimestamp { get; }
+        DateTime LastAccessTimestamp { get; }
         TimeSpan TimeToLive { get; }
+        bool SlidingExpiration { get; }
         bool IsExpired();
         ICacheItem<T> WithUpdatedAccessTime();
     }
 
     static class CacheItem
     {
-        internal static ICacheItem<T> Create<T>(T value, TimeSpan timeToLive)
+        internal static ICacheItem<T> Create<T>(T value, TimeSpan timeToLive, bool slidingExpiration)
         {
             Type type = typeof(T);
 
@@ -24,35 +26,41 @@ namespace Hector.Threading.Caching
 
             if (shouldUseValueType)
             {
-                return new ValueCacheItem<T>(value, timeToLive);
+                return new ValueCacheItem<T>(value, timeToLive, DateTime.UtcNow, slidingExpiration);
             }
-            return new ReferenceCacheItem<T>(value, timeToLive);
+
+            return new ReferenceCacheItem<T>(value, timeToLive, slidingExpiration);
         }
     }
 
-    readonly struct ValueCacheItem<T>(T value, TimeSpan timeToLive) : ICacheItem<T>
+    readonly struct ValueCacheItem<T>(T value, TimeSpan timeToLive, DateTime creationTimestamp, bool slidingExpiration) : ICacheItem<T>
     {
-        public readonly DateTime LastAccess { get; } = DateTime.UtcNow;
+        public readonly DateTime CreationTimestamp { get; } = creationTimestamp;
+        public readonly DateTime LastAccessTimestamp { get; } = DateTime.UtcNow;
         public readonly TimeSpan TimeToLive { get; } = timeToLive;
+        public readonly bool SlidingExpiration { get; } = slidingExpiration;
 
         public T Value { get; } = value;
 
-        public readonly ICacheItem<T> WithUpdatedAccessTime() => new ValueCacheItem<T>(Value, TimeToLive);
+        public readonly ICacheItem<T> WithUpdatedAccessTime() =>
+            new ValueCacheItem<T>(Value, TimeToLive, CreationTimestamp, SlidingExpiration);
 
-        public readonly bool IsExpired() => DateTime.UtcNow - LastAccess > TimeToLive;
+        public readonly bool IsExpired() => DateTime.UtcNow - (SlidingExpiration ? LastAccessTimestamp : CreationTimestamp) > TimeToLive;
     }
 
-    class ReferenceCacheItem<T>(T value, TimeSpan timeToLive) : ICacheItem<T>
+    class ReferenceCacheItem<T>(T value, TimeSpan timeToLive, bool slidingExpiration) : ICacheItem<T>
     {
         public T Value { get; } = value;
+        public DateTime CreationTimestamp { get; } = DateTime.UtcNow;
+        public DateTime LastAccessTimestamp { get; private set; } = DateTime.UtcNow;
         public TimeSpan TimeToLive { get; } = timeToLive;
-        public DateTime LastAccess { get; private set; } = DateTime.UtcNow;
+        public bool SlidingExpiration { get; } = slidingExpiration;
 
-        public bool IsExpired() => DateTime.UtcNow - LastAccess > TimeToLive;
+        public bool IsExpired() => DateTime.UtcNow - (SlidingExpiration ? LastAccessTimestamp : CreationTimestamp) > TimeToLive;
 
         public ICacheItem<T> WithUpdatedAccessTime()
         {
-            LastAccess = DateTime.UtcNow;
+            LastAccessTimestamp = DateTime.UtcNow;
             return this;
         }
     }
