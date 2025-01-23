@@ -24,13 +24,16 @@ namespace Hector.Threading.Caching
             _channel.Writer.WriteAsync(item, cancellationToken);
 
         //Since this class is created using GetOrAdd method from ConcurrentDictionary
-        //It might be created more than once for each key, because GetOrAdd is not thread safe
+        //It might be created more than once for each key
+        //according to the GetOrAdd docs the lambda might get called more than once, even though the item added to the dict will be only one
         //So the start method is separated to avoid starting ConsumeAsync and not being able to stop it
         public void Start() => _ = _consumer.Value;
 
         public void Complete() => _channel.Writer.Complete();
 
         public void Stop() => _consumer.Value.GetAwaiter().GetResult();
+
+        public Task StopAsync() => _consumer.Value;
 
         private async Task ConsumeAsync(CancellationToken cancellationToken)
         {

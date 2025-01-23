@@ -98,7 +98,7 @@ namespace Hector.Threading.Caching
             value = removed ? cacheItem!.Value : default;
             return removed;
         }
-        
+
         public void Clear() => _cache.Clear();
 
         public bool TryAdd(TKey key, TValue value)
@@ -178,17 +178,18 @@ namespace Hector.Threading.Caching
             {
                 await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
 
-                foreach (CacheChannel<TKey, TValue> channel in _channelPool.Values)
+                foreach (TKey key in _channelPool.Keys)
                 {
-                    try
-                    {
-                        channel.Complete();
-                        channel.Stop();
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        // Ignore cancellation exceptions during cleanup
-                    }
+                    if (_channelPool.TryRemove(key, out CacheChannel<TKey, TValue>? channel))
+                        try
+                        {
+                            channel.Complete();
+                            await channel.StopAsync().ConfigureAwait(false);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            // Ignore cancellation exceptions during cleanup
+                        }
                 }
             }
         }
