@@ -54,13 +54,13 @@ namespace Hector.Threading.Caching
 
         public MemCache(MemCacheOptions options)
         {
-            _cancellationTokenSource = new CancellationTokenSource();
+            _cancellationTokenSource = new();
 
             Capacity = options.Capacity;
             TimeToLive = options.TimeToLive ?? TimeSpan.FromMinutes(5);
             EvictionInterval = options.EvictionInterval ?? new TimeSpan(TimeToLive.Ticks / 100L * 10); // 10%
 
-            _backgroundTask = Task.Run(() => DoBackgroundWorkAsync(_cancellationTokenSource.Token));
+            _backgroundTask = Task.Run(() => DoBackgroundWorkAsync());
             ThrowIfCapacityExceeded = options.ThrowIfCapacityExceeded;
             SlidingExpiration = options.SlidingExpiration;
         }
@@ -202,7 +202,7 @@ namespace Hector.Threading.Caching
                                 // Check and evict before adding new item
                                 ValueTask<TValue> factoryTask = msg.Factory(_cancellationTokenSource.Token);
 
-                                await TryEvictOldestIfNeededAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+                                await TryEvictOldestIfNeededAsync().ConfigureAwait(false);
 
                                 value = await factoryTask.ConfigureAwait(false);
 
@@ -224,34 +224,34 @@ namespace Hector.Threading.Caching
                     )
                 );
 
-        private Task DoBackgroundWorkAsync(CancellationToken cancellationToken)
+        private Task DoBackgroundWorkAsync()
         {
-            Task evictAccessedItemsTask = EvictExpiredAccessedItemsAsync(cancellationToken);
-            Task evictStaleItemsTask = EvictExpiredStaleItemsAsync(cancellationToken);
-            Task cleaningTask = LoopCleanChannelPoolAsync(cancellationToken);
+            Task evictAccessedItemsTask = EvictExpiredAccessedItemsAsync();
+            Task evictStaleItemsTask = EvictExpiredStaleItemsAsync();
+            Task cleaningTask = LoopCleanChannelPoolAsync();
 
             return Task.WhenAll(evictAccessedItemsTask, evictStaleItemsTask, cleaningTask);
         }
 
-        private async Task EvictExpiredAccessedItemsAsync(CancellationToken cancellationToken)
+        private async Task EvictExpiredAccessedItemsAsync()
         {
-            while (!cancellationToken.IsCancellationRequested && _accessedItemsQueue.TryDequeue(out TKey? key))
+            while (!_cancellationTokenSource.Token.IsCancellationRequested && _accessedItemsQueue.TryDequeue(out TKey? key))
             {
-                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(EvictionInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
                 TryEvictItemIfExpired(key);
             }
         }
 
-        private async Task EvictExpiredStaleItemsAsync(CancellationToken cancellationToken)
+        private async Task EvictExpiredStaleItemsAsync()
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
-                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(EvictionInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
 
                 // Find keys in the cache that are not currently in the cleanup queue
                 foreach (TKey? key in _cache.Keys.Except(_accessedItemsQueue))
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (_cancellationTokenSource.Token.IsCancellationRequested)
                     {
                         break;
                     }
@@ -276,11 +276,11 @@ namespace Hector.Threading.Caching
             }
         }
 
-        private async Task LoopCleanChannelPoolAsync(CancellationToken cancellationToken)
+        private async Task LoopCleanChannelPoolAsync()
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
-                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(EvictionInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
                 await CleanChannelPoolAsync().ConfigureAwait(false);
             }
         }
@@ -289,6 +289,11 @@ namespace Hector.Threading.Caching
         {
             foreach (TKey key in _channelPool.Keys)
             {
+                if (_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 if (_channelPool.TryRemove(key, out CacheChannel<TKey, TValue>? channel))
                 {
                     try
@@ -304,7 +309,7 @@ namespace Hector.Threading.Caching
             }
         }
 
-        private async ValueTask TryEvictOldestIfNeededAsync(CancellationToken cancellationToken)
+        private async ValueTask TryEvictOldestIfNeededAsync()
         {
             if (Capacity <= 0
                 || ThrowIfCapacityExceeded
@@ -313,7 +318,7 @@ namespace Hector.Threading.Caching
                 return;
             }
 
-            using (await _evictionLock.LockAsync(cancellationToken).ConfigureAwait(false))
+            using (await _evictionLock.LockAsync(_cancellationTokenSource.Token).ConfigureAwait(false))
             {
                 // Re-check after acquiring lock
                 if (_cache.Count - Capacity < 0)
