@@ -1,6 +1,7 @@
 ﻿using Nito.AsyncEx;
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,7 +26,8 @@ namespace Hector.Threading.Caching
     {
         private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
         private readonly ConcurrentDictionary<TKey, ICacheItem<TValue>> _cache = [];
-        private readonly ConcurrentQueue<TKey> _accessQueue = [];
+        private readonly ConcurrentQueue<TKey> _addedItemsQueue = [];
+        private readonly ConcurrentQueue<TKey> _accessedItemsQueue = new(); // Tracks accessed keys that might expire
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly AsyncLock _evictionLock = new();
         private readonly Task _backgroundTask;
@@ -84,6 +86,7 @@ namespace Hector.Threading.Caching
                 else
                 {
                     _cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem);
+                    _accessedItemsQueue.Enqueue(key); // Re-enqueue the key when accessed
                     value = cacheItem.Value;
                     return true;
                 }
@@ -105,7 +108,7 @@ namespace Hector.Threading.Caching
         {
             if (Capacity > 0)
             {
-                _accessQueue.Enqueue(key);
+                _addedItemsQueue.Enqueue(key);
             }
 
             return _cache.TryAdd(key, CacheItem.Create(value, TimeToLive));
@@ -133,7 +136,7 @@ namespace Hector.Threading.Caching
 
                                 if (Capacity > 0)
                                 {
-                                    _accessQueue.Enqueue(msg.Key);
+                                    _addedItemsQueue.Enqueue(msg.Key);
                                 }
                             }
                             else
@@ -149,25 +152,52 @@ namespace Hector.Threading.Caching
 
         private Task DoBackgroundWorkAsync(CancellationToken cancellationToken)
         {
-            Task evictionTask = EvictExpiredItemsAsync(cancellationToken);
+            Task evictAccessedItemsTask = EvictExpiredAccessedItemsAsync(cancellationToken);
+            Task evictStaleItemsTask = EvictExpiredStaleItemsAsync(cancellationToken);
             Task cleaningTask = CleanChannelPoolAsync(cancellationToken);
 
-            return Task.WhenAll(evictionTask, cleaningTask);
+            return Task.WhenAll(evictAccessedItemsTask, evictStaleItemsTask, cleaningTask);
         }
 
-        private async Task EvictExpiredItemsAsync(CancellationToken cancellationToken)
+        private async Task EvictExpiredAccessedItemsAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested && _accessedItemsQueue.TryDequeue(out TKey? key))
+            {
+                await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+                TryEvictItemIfExpired(key);
+            }
+        }
+
+        private async Task EvictExpiredStaleItemsAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
 
-                foreach (var kvp in _cache)
+                // Find keys in the cache that are not currently in the cleanup queue
+                foreach (TKey? key in _cache.Keys.Except(_accessedItemsQueue))
                 {
-                    if (kvp.Value.IsExpired())
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        // Directly remove the item if it's expired
-                        _cache.TryRemove(kvp.Key, out _);
+                        break;
                     }
+
+                    TryEvictItemIfExpired(key);
+                }
+            }
+        }
+
+        private void TryEvictItemIfExpired(TKey key)
+        {
+            if (_cache.TryGetValue(key, out ICacheItem<TValue>? cacheItem))
+            {
+                if (cacheItem.IsExpired())
+                {
+                    _cache.TryRemove(key, out _); // Expired, so remove
+                }
+                else
+                {
+                    _accessedItemsQueue.Enqueue(key); // Not expired, enqueue for future cleanup
                 }
             }
         }
@@ -222,7 +252,7 @@ namespace Hector.Threading.Caching
 
                 int removedKeysCount = 0, itemsToRemoveCount = _cache.Count - Capacity + 1;
 
-                while (removedKeysCount++ <= itemsToRemoveCount && _accessQueue.TryDequeue(out TKey? key))
+                while (removedKeysCount++ <= itemsToRemoveCount && _addedItemsQueue.TryDequeue(out TKey? key))
                 {
                     if (!_cache.ContainsKey(key))
                     {
