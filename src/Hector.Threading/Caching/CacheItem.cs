@@ -15,6 +15,18 @@ namespace Hector.Threading.Caching
 
     static class CacheItem
     {
+        internal static ICacheItem<T> FromExisting<T>(ICacheItem<T> existingItem, T newValue, TimeSpan timeToLive, bool slidingExpiration)
+        {
+            if (existingItem is ValueCacheItem<T>)
+            {
+                return new ValueCacheItem<T>(newValue, timeToLive, existingItem.CreationTimestamp, slidingExpiration);
+            }
+            else
+            {
+                return new ReferenceCacheItem<T>(newValue, timeToLive, slidingExpiration);
+            }
+        }
+
         internal static ICacheItem<T> Create<T>(T value, TimeSpan timeToLive, bool slidingExpiration)
         {
             Type type = typeof(T);
@@ -48,13 +60,26 @@ namespace Hector.Threading.Caching
         public readonly bool IsExpired() => DateTime.UtcNow - (SlidingExpiration ? LastAccessTimestamp : CreationTimestamp) > TimeToLive;
     }
 
-    class ReferenceCacheItem<T>(T value, TimeSpan timeToLive, bool slidingExpiration) : ICacheItem<T>
+    class ReferenceCacheItem<T> : ICacheItem<T>
     {
-        public T Value { get; } = value;
-        public DateTime CreationTimestamp { get; } = DateTime.UtcNow;
+        public T Value { get; }
+        public DateTime CreationTimestamp { get; }
         public DateTime LastAccessTimestamp { get; private set; } = DateTime.UtcNow;
-        public TimeSpan TimeToLive { get; } = timeToLive;
-        public bool SlidingExpiration { get; } = slidingExpiration;
+        public TimeSpan TimeToLive { get; }
+        public bool SlidingExpiration { get; }
+
+        internal ReferenceCacheItem(T value, TimeSpan timeToLive, bool slidingExpiration)
+            : this(value, timeToLive, DateTime.UtcNow, slidingExpiration)
+        {
+        }
+
+        internal ReferenceCacheItem(T value, TimeSpan timeToLive, DateTime creationTimestamp, bool slidingExpiration)
+        {
+            Value = value;
+            TimeToLive = timeToLive;
+            CreationTimestamp = creationTimestamp;
+            SlidingExpiration = slidingExpiration;
+        }
 
         public bool IsExpired() => DateTime.UtcNow - (SlidingExpiration ? LastAccessTimestamp : CreationTimestamp) > TimeToLive;
 

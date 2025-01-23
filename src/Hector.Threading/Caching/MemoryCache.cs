@@ -94,10 +94,12 @@ namespace Hector.Threading.Caching
                 }
                 else
                 {
-                    _cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem);
-                    _accessedItemsQueue.Enqueue(key); // Re-enqueue the key when accessed
-                    value = cacheItem.Value;
-                    return true;
+                    if (_cache.TryUpdate(key, cacheItem.WithUpdatedAccessTime(), cacheItem))
+                    {
+                        _accessedItemsQueue.Enqueue(key); // Re-enqueue the key when accessed
+                        value = cacheItem.Value;
+                        return true;
+                    }
                 }
             }
 
@@ -126,6 +128,27 @@ namespace Hector.Threading.Caching
             }
 
             return _cache.TryAdd(key, CacheItem.Create(value, TimeToLive, SlidingExpiration));
+        }
+
+        public bool TryUpdate(TKey key, TValue value)
+        {
+            if (_cache.TryGetValue(key, out ICacheItem<TValue>? cacheItem))
+            {
+                if (cacheItem.IsExpired())
+                {
+                    _cache.TryRemove(key, out _);
+                }
+                else
+                {
+                    if (_cache.TryUpdate(key, CacheItem.FromExisting(cacheItem, value, TimeToLive, SlidingExpiration), cacheItem))
+                    {
+                        _accessedItemsQueue.Enqueue(key); // Re-enqueue the key when accessed
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private CacheChannel<TKey, TValue> GetCacheChannel(TKey key) =>
