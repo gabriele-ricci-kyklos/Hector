@@ -124,10 +124,11 @@ namespace Hector.Threading.Caching
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async ValueTask ClearAsync()
+        public async Task ClearAsync()
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            CommonClear();
+            await CleanChannelPoolAsync().ConfigureAwait(false);
+            _cache.Clear();
 
 #if NET5_0_OR_GREATER
             _accessedItemsQueue.Clear();
@@ -147,12 +148,6 @@ namespace Hector.Threading.Caching
             {
                 queue.TryDequeue(out _);
             }
-        }
-
-        private void CommonClear()
-        {
-            _cache.Clear();
-            _channelPool.Clear();
         }
 
         public bool TryAdd(TKey key, TValue value)
@@ -233,7 +228,7 @@ namespace Hector.Threading.Caching
         {
             Task evictAccessedItemsTask = EvictExpiredAccessedItemsAsync(cancellationToken);
             Task evictStaleItemsTask = EvictExpiredStaleItemsAsync(cancellationToken);
-            Task cleaningTask = CleanChannelPoolAsync(cancellationToken);
+            Task cleaningTask = LoopCleanChannelPoolAsync(cancellationToken);
 
             return Task.WhenAll(evictAccessedItemsTask, evictStaleItemsTask, cleaningTask);
         }
@@ -281,24 +276,30 @@ namespace Hector.Threading.Caching
             }
         }
 
-        private async Task CleanChannelPoolAsync(CancellationToken cancellationToken)
+        private async Task LoopCleanChannelPoolAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(EvictionInterval, cancellationToken).ConfigureAwait(false);
+                await CleanChannelPoolAsync().ConfigureAwait(false);
+            }
+        }
 
-                foreach (TKey key in _channelPool.Keys)
+        private async Task CleanChannelPoolAsync()
+        {
+            foreach (TKey key in _channelPool.Keys)
+            {
+                if (_channelPool.TryRemove(key, out CacheChannel<TKey, TValue>? channel))
                 {
-                    if (_channelPool.TryRemove(key, out CacheChannel<TKey, TValue>? channel))
-                        try
-                        {
-                            channel.Complete();
-                            await channel.StopAsync().ConfigureAwait(false);
-                        }
-                        catch (TaskCanceledException)
-                        {
-                            // Ignore cancellation exceptions during cleanup
-                        }
+                    try
+                    {
+                        channel.Complete();
+                        await channel.StopAsync().ConfigureAwait(false);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Ignore cancellation exceptions during cleanup
+                    }
                 }
             }
         }
