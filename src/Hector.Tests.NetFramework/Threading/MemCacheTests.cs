@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using Hector.Threading.Caching;
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
