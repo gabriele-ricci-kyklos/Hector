@@ -45,6 +45,12 @@ namespace Hector.Threading.Caching
         public readonly bool SlidingExpiration;
 
         public int Count => _cache.Count;
+        public TKey[] Keys => _cache.Keys.ToArray();
+        public TValue[] Values =>
+            _cache
+                .Values
+                .Select(x => x.Value)
+                .ToArray();
 
         public MemCache(MemCacheOptions options)
         {
