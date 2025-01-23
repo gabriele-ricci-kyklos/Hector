@@ -32,6 +32,10 @@ namespace Hector.Threading.Caching
         private readonly ConcurrentQueue<TKey> _accessedItemsQueue = new(); // Tracks accessed keys that might expire
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly AsyncLock _evictionLock = new();
+#if NET5_0_OR_GREATER
+#else
+        private readonly AsyncLock _clearLock = new();
+#endif
         private readonly Task _backgroundTask;
 
         public readonly int Capacity;
@@ -113,7 +117,37 @@ namespace Hector.Threading.Caching
             return removed;
         }
 
-        public void Clear() => _cache.Clear();
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async ValueTask ClearAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            CommonClear();
+
+#if NET5_0_OR_GREATER
+            _accessedItemsQueue.Clear();
+            _addedItemsQueue.Clear();
+#else
+            using (await _clearLock.LockAsync(_cancellationTokenSource.Token).ConfigureAwait(false))
+            {
+                ClearQueueNetStandard(_accessedItemsQueue);
+                ClearQueueNetStandard(_addedItemsQueue);
+            }
+#endif
+        }
+
+        private static void ClearQueueNetStandard(ConcurrentQueue<TKey> queue)
+        {
+            while (queue.TryPeek(out _))
+            {
+                queue.TryDequeue(out _);
+            }
+        }
+
+        private void CommonClear()
+        {
+            _cache.Clear();
+            _channelPool.Clear();
+        }
 
         public bool TryAdd(TKey key, TValue value)
         {
