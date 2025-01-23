@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Hector.Tests.NetFramework.Core.Parallelism
+namespace Hector.Tests.NetFramework.Core.Threading
 {
     public class ParallelTests
     {
