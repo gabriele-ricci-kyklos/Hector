@@ -165,7 +165,7 @@ namespace Hector.Threading.Caching
                                 // Check and evict before adding new item
                                 ValueTask<TValue> factoryTask = msg.Factory(_cancellationTokenSource.Token);
 
-                                await TryEvictOldestIfNeededAsync().ConfigureAwait(false);
+                                await TryEvictOldestIfNeededAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
 
                                 value = await factoryTask.ConfigureAwait(false);
 
@@ -261,7 +261,7 @@ namespace Hector.Threading.Caching
             }
         }
 
-        private async ValueTask TryEvictOldestIfNeededAsync()
+        private async ValueTask TryEvictOldestIfNeededAsync(CancellationToken cancellationToken)
         {
             if (Capacity <= 0
                 || ThrowIfCapacityExceeded
@@ -270,7 +270,7 @@ namespace Hector.Threading.Caching
                 return;
             }
 
-            using (await _evictionLock.LockAsync())
+            using (await _evictionLock.LockAsync(cancellationToken).ConfigureAwait(false))
             {
                 // Re-check after acquiring lock
                 if (_cache.Count - Capacity < 0)
