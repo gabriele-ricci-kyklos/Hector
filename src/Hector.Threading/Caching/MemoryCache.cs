@@ -14,7 +14,7 @@ namespace Hector.Threading.Caching
     {
     }
 
-    public record MemCacheOptions
+    public record MemoryCacheOptions
     (
         int Capacity = 0,
         TimeSpan? TimeToLive = null,
@@ -23,7 +23,7 @@ namespace Hector.Threading.Caching
         bool SlidingExpiration = false
     );
 
-    public sealed class MemCache<TKey, TValue> : IDisposable
+    public sealed class MemoryCache<TKey, TValue> : IDisposable
         where TKey : notnull
     {
         private readonly ConcurrentDictionary<TKey, CacheChannel<TKey, TValue>> _channelPool = [];
@@ -52,11 +52,11 @@ namespace Hector.Threading.Caching
                 .Select(x => x.Value)
                 .ToArray();
 
-        public MemCache() : this(new MemCacheOptions())
+        public MemoryCache() : this(new MemoryCacheOptions())
         {
         }
 
-        public MemCache(MemCacheOptions options)
+        public MemoryCache(MemoryCacheOptions options)
         {
             _cancellationTokenSource = new();
 

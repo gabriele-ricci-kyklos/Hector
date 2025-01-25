@@ -151,7 +151,7 @@
   <ItemGroup>
     <Compile Include="Core\Collections\CollectionTests.cs" />
     <Compile Include="Core\Compression\CompressionTests.cs" />
-    <Compile Include="Threading\MemCacheTests.cs" />
+    <Compile Include="Threading\MemoryCacheTests.cs" />
     <Compile Include="Threading\ParallelTests.cs" />
     <Compile Include="Reflection\ReflectionExtensionMethodsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -5,12 +5,12 @@ using Xunit;
 
 namespace Hector.Tests.NetFramework.Threading
 {
-    public class MemCacheTests
+    public class MemoryCacheTests
     {
         [Fact]
         public async Task ClearAsync_ShouldRemoveAllItems()
         {
-            using (MemCache<string, int> cache = new MemCache<string, int>())
+            using (MemoryCache<string, int> cache = new MemoryCache<string, int>())
             {
                 // Arrange
                 await cache.GetOrCreateAsync("key1", _ => new ValueTask<int>(1));

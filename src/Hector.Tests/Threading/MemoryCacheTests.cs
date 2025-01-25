@@ -3,14 +3,14 @@ using Hector.Threading.Caching;
 
 namespace Hector.Tests.Threading
 {
-    public class MemCacheTests
+    public class MemoryCacheTests
     {
         [Fact]
         public async Task GetOrCreateAsync_ShouldAddItemToCache_WhenNotAlreadyPresent()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
 
             // Act
             string value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
@@ -25,8 +25,8 @@ namespace Hector.Tests.Threading
         public async Task GetOrCreateAsync_ShouldReturnExistingValue_WhenKeyExists()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Act
@@ -40,8 +40,8 @@ namespace Hector.Tests.Threading
         public void TryGetValue_ShouldReturnFalse_WhenKeyDoesNotExist()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
 
             // Act
             bool result = cache.TryGetValue("key1", out string? value);
@@ -55,8 +55,8 @@ namespace Hector.Tests.Threading
         public void TryAdd_ShouldAddItem_WhenKeyDoesNotExist()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
 
             // Act
             bool result = cache.TryAdd("key1", "value1");
@@ -71,8 +71,8 @@ namespace Hector.Tests.Threading
         public void TryAdd_ShouldThrowException_WhenCapacityExceededAndThrowIfCapacityExceededIsTrue()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 1, ThrowIfCapacityExceeded: true);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 1, ThrowIfCapacityExceeded: true);
+            using MemoryCache<string, string> cache = new(options);
             cache.TryAdd("key1", "value1");
 
             // Act
@@ -86,8 +86,8 @@ namespace Hector.Tests.Threading
         public void TryRemove_ShouldRemoveItem_WhenKeyExists()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
             cache.TryAdd("key1", "value1");
 
             // Act
@@ -103,8 +103,8 @@ namespace Hector.Tests.Threading
         public async Task Eviction_ShouldRemoveOldestItem_WhenCapacityExceeded()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 2);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 2);
+            using MemoryCache<string, string> cache = new(options);
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
             await cache.GetOrCreateAsync("key2", _ => ValueTask.FromResult("value2"));
 
@@ -121,8 +121,8 @@ namespace Hector.Tests.Threading
         public async Task Item_ShouldExpire_WhenTimeToLiveExceeded()
         {
             // Arrange
-            MemCacheOptions options = new(TimeToLive: TimeSpan.FromMilliseconds(300));
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(TimeToLive: TimeSpan.FromMilliseconds(300));
+            using MemoryCache<string, string> cache = new(options);
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Act
@@ -140,7 +140,7 @@ namespace Hector.Tests.Threading
             int halfTTL = ttlMilliseconds / 2;
 
             // Arrange
-            using MemCache<string, int> cache = new(new(
+            using MemoryCache<string, int> cache = new(new(
                 TimeToLive: TimeSpan.FromMilliseconds(ttlMilliseconds),
                 SlidingExpiration: true
             ));
@@ -167,7 +167,7 @@ namespace Hector.Tests.Threading
         [Fact]
         public async Task ClearAsync_ShouldRemoveAllItems()
         {
-            using MemCache<string, int> cache = new();
+            using MemoryCache<string, int> cache = new();
 
             // Arrange
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult(1));
@@ -184,8 +184,8 @@ namespace Hector.Tests.Threading
         public void ContainsKey_ShouldReturnTrue_WhenKeyExists()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
             cache.TryAdd("key1", "value1");
 
             // Act
@@ -201,8 +201,8 @@ namespace Hector.Tests.Threading
         public void TryUpdate_ShouldUpdateValue_WhenKeyExistsAndNotExpired()
         {
             // Arrange
-            MemCacheOptions options = new(Capacity: 10);
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(Capacity: 10);
+            using MemoryCache<string, string> cache = new(options);
             cache.TryAdd("key1", "value1");
 
             // Act
@@ -220,8 +220,8 @@ namespace Hector.Tests.Threading
         public async Task TryUpdate_ShouldReturnFalse_WhenKeyIsExpired()
         {
             // Arrange
-            MemCacheOptions options = new(TimeToLive: TimeSpan.FromMilliseconds(100));
-            using MemCache<string, string> cache = new(options);
+            MemoryCacheOptions options = new(TimeToLive: TimeSpan.FromMilliseconds(100));
+            using MemoryCache<string, string> cache = new(options);
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
             await Task.Delay(200);
 
@@ -236,7 +236,7 @@ namespace Hector.Tests.Threading
         public async Task Test_factory_delegate_called_only_once()
         {
             // Arrange
-            using MemCache<int, int> cache = new();
+            using MemoryCache<int, int> cache = new();
             int counter = 0;
 
             //Act
