@@ -11,6 +11,11 @@ using System.Threading.Tasks;
 
 namespace Hector.Data.Oracle
 {
+    public static class OracleProvider
+    {
+        public const string Name = "Oracle";
+    }
+
     public class OracleAsyncDao : BaseAsyncDao
     {
         public OracleAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)

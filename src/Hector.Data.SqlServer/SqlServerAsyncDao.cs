@@ -12,6 +12,11 @@ using System.Threading.Tasks;
 
 namespace Hector.Data.SqlServer
 {
+    public static class SqlServerProvider
+    {
+        public const string Name = "SqlServer";
+    }
+
     public class SqlServerAsyncDao : BaseAsyncDao
     {
         public SqlServerAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)
