@@ -106,3 +106,5 @@ UpgradeLog*.htm
 # SQL Server files
 *.mdf
 *.ldf
+
+connstring_*.txt
