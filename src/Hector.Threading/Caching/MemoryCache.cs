@@ -69,7 +69,7 @@ namespace Hector.Threading.Caching
             SlidingExpiration = options.SlidingExpiration;
         }
 
-        public async Task<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
+        public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
             if (TryGetValue(key, out TValue? cacheItemValue))
             {

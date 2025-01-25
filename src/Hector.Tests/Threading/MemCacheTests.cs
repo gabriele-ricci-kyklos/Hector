@@ -231,5 +231,29 @@ namespace Hector.Tests.Threading
             // Assert
             result.Should().BeFalse();
         }
+
+        [Fact]
+        public async Task Test_factory_delegate_called_only_once()
+        {
+            // Arrange
+            using MemCache<int, int> cache = new();
+            int counter = 0;
+
+            //Act
+            List<Task> tasks = [];
+            for(int i = 0; i < 1000; ++i)
+            {
+                tasks.Add(cache.GetOrCreateAsync(1, c =>
+                {
+                    Interlocked.Increment(ref counter);
+                    return ValueTask.FromResult(1);
+                }).AsTask());
+            }
+
+            await Task.WhenAll(tasks);
+
+            // Assert
+            counter.Should().Be(1);
+        }
     }
 }
