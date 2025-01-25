@@ -4,6 +4,9 @@ namespace Hector.Data
 {
     public static class AsyncDaoFactory
     {
+        public static IAsyncDao CreateAsyncDao(string providerName, string connectionString, string schema, bool ignoreEscape = false) =>
+            CreateAsyncDao(providerName, new(connectionString, schema, ignoreEscape));
+
         public static IAsyncDao CreateAsyncDao(string providerName, AsyncDaoOptions options)
         {
             string assembyName = $"Hector.Data.{providerName}";
