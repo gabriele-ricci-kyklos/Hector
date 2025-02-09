@@ -25,7 +25,7 @@ namespace Hector.Tests.Data
         [Fact]
         public void TestSqlServerAsyncDaoFactory()
         {
-            IAsyncDao dao = AsyncDaoFactory.CreateAsyncDao(SqlServerProvider.Name, new("asd", "dbo", false));
+            IAsyncDao dao = AsyncDaoFactory.CreateAsyncDao(SqlServerAsyncDao.ProviderName, new("asd", "dbo", false));
             dao.Should().NotBeNull();
         }
     }

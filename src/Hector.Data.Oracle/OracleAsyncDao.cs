@@ -3,7 +3,6 @@ using Hector.Data.Queries;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
@@ -11,13 +10,10 @@ using System.Threading.Tasks;
 
 namespace Hector.Data.Oracle
 {
-    public static class OracleProvider
-    {
-        public const string Name = "Oracle";
-    }
-
     public class OracleAsyncDao : BaseAsyncDao
     {
+        public const string ProviderName = "Oracle";
+
         public OracleAsyncDao(AsyncDaoOptions options, IAsyncDaoHelper asyncDaoHelper, IDbConnectionFactory connectionFactory)
             : base(options, asyncDaoHelper, connectionFactory)
         {

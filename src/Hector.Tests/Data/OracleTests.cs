@@ -23,7 +23,7 @@ namespace Hector.Tests.Data
         [Fact]
         public void TestSqlServerAsyncDaoFactory()
         {
-            IAsyncDao dao = AsyncDaoFactory.CreateAsyncDao(OracleProvider.Name, new("asd", "dbo", false));
+            IAsyncDao dao = AsyncDaoFactory.CreateAsyncDao(OracleAsyncDao.ProviderName, new("asd", "dbo", false));
             dao.Should().NotBeNull();
         }
     }
