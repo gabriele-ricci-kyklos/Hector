@@ -11,19 +11,18 @@ namespace Hector.Collections
         public static FuncEqualityComparer<T> Create(Func<T, int> getHashCodeFx, Func<T?, T?, bool> equalsFx) =>
             new(getHashCodeFx, equalsFx);
 
-        public static FuncEqualityComparer<T> ByProperty(Func<T?, object> propertyFx, bool nullValuesEqual = true)
+        public static FuncEqualityComparer<T> ByProperty(Func<T, object?> propertyFx, bool nullValuesEqual = true)
         {
             Func<T?, T?, bool> equalsFx = (x, y) =>
             {
-                var xProp = propertyFx(x);
-                var yProp = propertyFx(y);
+                object? xProp = x is null ? null : propertyFx(x);
+                object? yProp = y is null ? null : propertyFx(y);
 
                 if (xProp is null && yProp is null)
                 {
                     return nullValuesEqual;
                 }
-
-                if (xProp is null)
+                else if (xProp is null || yProp is null)
                 {
                     return false;
                 }
@@ -33,7 +32,7 @@ namespace Hector.Collections
 
             Func<T, int> getHashCodeFx = (x) =>
             {
-                var prop = propertyFx(x);
+                object? prop = propertyFx(x);
                 return prop?.GetHashCode() ?? (nullValuesEqual ? 0 : x?.GetHashCode() ?? 0);
             };
 

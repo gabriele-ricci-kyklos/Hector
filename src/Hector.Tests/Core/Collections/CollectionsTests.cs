@@ -62,17 +62,21 @@ namespace Hector.Tests.Core.Collections
                 new Entity
                 {
                     Dosage = 1,
-                    Drug = "a"
+                    Drug = "a",
+                    Diagnosis = "c"
                 },
                 new Entity
                 {
                     Dosage = 1,
-                    Drug = "b"
+                    Drug = "b",
+                    Diagnosis = null
                 }
             ];
 
             data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Drug!)).Should().HaveCount(2);
             data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Dosage)).Should().ContainSingle();
+            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Diagnosis)).Should().HaveCount(2);
+            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Date)).Should().ContainSingle();
         }
     }
 
