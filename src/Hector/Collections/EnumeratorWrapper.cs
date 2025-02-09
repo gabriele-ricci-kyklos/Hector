@@ -3,20 +3,21 @@ using System.Collections.Generic;
 
 namespace Hector.Collections
 {
-    public sealed class EnumeratorWrapper<T> : IDisposable
+    public sealed class EnumeratorWrapper<T>(IEnumerator<T> enumerator) : IDisposable
     {
-        private readonly IEnumerator<T> _enumerator;
+        private readonly IEnumerator<T> _enumerator = enumerator;
 
         public T NextValue
         {
             get
             {
-                if (_enumerator.MoveNext())
+                T? nextItem = SafeNextValue;
+                if (nextItem?.Equals(default(T)) ?? true)
                 {
-                    return _enumerator.Current;
+                    throw new IndexOutOfRangeException();
                 }
 
-                throw new IndexOutOfRangeException();
+                return nextItem;
             }
         }
 
@@ -38,11 +39,6 @@ namespace Hector.Collections
         public EnumeratorWrapper(IEnumerable<T> items)
             : this(items.GetEnumerator())
         {
-        }
-
-        public EnumeratorWrapper(IEnumerator<T> enumerator)
-        {
-            _enumerator = enumerator;
         }
 
         public IEnumerable<T> EnumerateRangeValues(int rangeSize)

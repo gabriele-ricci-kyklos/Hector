@@ -72,7 +72,7 @@ namespace Hector.Tests.Core.Collections
             ];
 
             data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Drug!)).Should().HaveCount(2);
-            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Dosage)).Should().HaveCount(1);
+            data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Dosage)).Should().ContainSingle();
         }
     }
 
