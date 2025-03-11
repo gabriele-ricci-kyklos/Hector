@@ -32,6 +32,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Hector.Data.Oracle\Hector.Data.Oracle.csproj" />
     <ProjectReference Include="..\Hector.Data.SqlServer\Hector.Data.SqlServer.csproj" />
+    <ProjectReference Include="..\Hector.Excel\Hector.Excel.csproj" />
     <ProjectReference Include="..\Hector.Json\Hector.Json.csproj" />
     <ProjectReference Include="..\Hector.Threading\Hector.Threading.csproj" />
   </ItemGroup>
