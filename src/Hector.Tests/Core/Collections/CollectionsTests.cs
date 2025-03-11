@@ -31,13 +31,14 @@ namespace Hector.Tests.Core.Collections
 
             enumeratorWrapper.Current.Should().Be(data[0]);
 
-            enumeratorWrapper.EnumerateRangeValues(3)
+            enumeratorWrapper.GetRangeValues(3)
                 .ToArray() //calculating the enumerable to prevent FluentAssertion's methods to move forward
                 .Should().NotBeNullOrEmpty()
                 .And.HaveCount(3)
                 .And.BeInAscendingOrder();
 
             enumeratorWrapper.GetRangeValues(4)
+                .ToArray() //calculating the enumerable to prevent FluentAssertion's methods to move forward
                 .Should().NotBeNullOrEmpty()
                 .And.HaveCount(4)
                 .And.BeInAscendingOrder();
@@ -45,10 +46,12 @@ namespace Hector.Tests.Core.Collections
             enumeratorWrapper.SafeNextValue.Should().Be(data[8]);
 
             enumeratorWrapper.SafeNextValue.Should().Be(0);
-            enumeratorWrapper.Invoking(x => x.NextValue).Should().Throw<IndexOutOfRangeException>();
+            enumeratorWrapper.Invoking(x => x.NextValue).Should().Throw<InvalidOperationException>();
 
             using EnumeratorWrapper<int> enumeratorWrapper2 = new(data);
-            enumeratorWrapper2.GetRangeValues(12)
+            enumeratorWrapper2
+                .GetRangeValues(12)
+                .ToArray() //calculating the enumerable to prevent FluentAssertion's methods to move forward
                 .Should().NotBeNullOrEmpty()
                 .And.HaveCount(9)
                 .And.BeInAscendingOrder();
