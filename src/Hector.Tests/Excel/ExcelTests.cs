@@ -1,4 +1,5 @@
-﻿using Hector.Excel;
+﻿using FluentAssertions;
+using Hector.Excel;
 using OfficeOpenXml.Style;
 using System.Drawing;
 
@@ -6,6 +7,8 @@ namespace Hector.Tests.Excel
 {
     public class ExcelTests
     {
+        const string _filePath = @"C:\temp\hector_excel.xlsx";
+
         [Fact]
         public async Task TestExcelFileCreationWithRemiraStyle()
         {
@@ -46,17 +49,28 @@ namespace Hector.Tests.Excel
 
             ExcelCreator excelCreator = new(options);
 
-            const string filePath = @"C:\temp\hector_excel.xlsx";
-            if (File.Exists(filePath))
+            if (File.Exists(_filePath))
             {
-                File.Delete(filePath);
+                File.Delete(_filePath);
             }
 
-            using FileStream stream = new(filePath, FileMode.CreateNew);
+            using FileStream stream = new(_filePath, FileMode.CreateNew);
             await excelCreator.CreateExcelFileAsync("Report", data, stream, true, nameof(ExcelDTO.Code2).AsArray());
+        }
+
+        [Fact]
+        public void ReadExcel()
+        {
+            ExcelDTO[] items = ExcelReader.GetExcelWorksheet<ExcelDTO>(_filePath);
+            items.Should().NotBeNullOrEmpty();
         }
     }
 
 #nullable disable
-    public record ExcelDTO(DateTime Date, int Id, string Code, string Code2);
+    public record ExcelDTO(DateTime Date, int Id, string Code, string Code2)
+    {
+        public ExcelDTO() : this(default, default, null, null)
+        {
+        }
+    }
 }
