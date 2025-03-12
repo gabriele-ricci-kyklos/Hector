@@ -119,14 +119,20 @@ namespace Hector.Excel
             return hasData;
         }
 
+        static readonly Type[] _dateTimeTypes = [typeof(DateTime), typeof(DateTime?)];
+
         private static object? TryCastCellValue(object cellValue, Type type)
         {
             try
             {
-                if(type == typeof(DateTime) && cellValue.TryConvertTo<double>(out double oADateValue))
+                if (type.IsIn(_dateTimeTypes))
                 {
-                    DateTime dateTime = DateTime.FromOADate(oADateValue);
-                    return dateTime;
+                    string? strCellValue = cellValue?.ToString();
+                    double? oADateValue = strCellValue.ToNumber<double>();
+                    if (oADateValue.HasValue)
+                    {
+                        return DateTime.FromOADate(oADateValue.Value);
+                    }
                 }
 
                 object? castedValue = cellValue?.ConvertTo(type) ?? type.GetDefaultValue();
