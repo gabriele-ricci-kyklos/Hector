@@ -55,6 +55,20 @@ namespace Hector.Tests.Reflection
         }
 
         [Fact]
+        public void TestGetUnorderedPropertyList()
+        {
+            string[] expetedProps = [nameof(BaseEntity.Name), nameof(ConcreteEntity.Dosage), nameof(ConcreteEntity.Drug), nameof(ConcreteEntity.Diagnosis)];
+
+            var result = typeof(ConcreteEntity).GetUnorderedPropertyList(nameof(ConcreteEntity.Date).AsArray());
+
+            result.Should().NotBeNull();
+
+            var names = result.Select(x => x.Name);
+
+            names.Should().Contain(expetedProps);
+        }
+
+        [Fact]
         public void TestGetHierarchicalOrderedPropertyList()
         {
             string[] expetedProps = [nameof(BaseEntity.Name), nameof(ConcreteEntity.Dosage), nameof(ConcreteEntity.Drug), nameof(ConcreteEntity.Diagnosis)];

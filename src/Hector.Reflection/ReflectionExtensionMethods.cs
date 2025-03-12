@@ -16,6 +16,24 @@ namespace Hector.Reflection
             return properties.Where(x => !propsToExclude.Contains(x.Name)).ToArray();
         }
 
+        public static Member[] GetUnorderedPropertyList<T>(this T obj, string[]? propertiesToExclude = null)
+            where T : notnull =>
+            TypeAccessor
+                .Create(obj.GetType())
+                .GetUnorderedPropertyList(propertiesToExclude);
+
+        public static Member[] GetUnorderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
+            TypeAccessor
+                .Create(type)
+                .GetUnorderedPropertyList(propertiesToExclude);
+
+        public static Member[] GetUnorderedPropertyList(this TypeAccessor typeAccessor, string[]? propertiesToExclude = null)
+        {
+            MemberSet members = typeAccessor.GetMembers();
+            HashSet<string> propertiesToExcludeSet = new(propertiesToExclude.ToEmptyIfNull(), StringComparer.OrdinalIgnoreCase);
+            return members.Where(x => !propertiesToExcludeSet.Contains(x.Name)).ToArray();
+        }
+
         public static Type[] GetTypeHierarchy(this Type type)
         {
             List<Type> typesHierarchyList = [];
