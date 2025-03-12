@@ -33,12 +33,7 @@ namespace Hector.Reflection
             return typesHierarchyList.ToArray();
         }
 
-        public static PropertyInfo[] GetHierarchicalOrderedPropertyList(this Type type, string[]? propertiesToExclude = null) =>
-            TypeAccessor
-                .Create(type)
-                .GetHierarchicalOrderedPropertyList(type, propertiesToExclude);
-
-        public static PropertyInfo[] GetHierarchicalOrderedPropertyList(this TypeAccessor typeAccessor, Type type, string[]? propertiesToExclude = null)
+        public static PropertyInfo[] GetHierarchicalOrderedPropertyList(this Type type, string[]? propertiesToExclude = null)
         {
             Type[] typesHierarchyList = type.GetTypeHierarchy();
 

@@ -1,5 +1,4 @@
-﻿using FastMember;
-using Hector.Reflection;
+﻿using Hector.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -57,9 +56,7 @@ namespace Hector.Excel
 
         internal static ExcelSheet FromObjects<T>(string name, T[] data, bool createHeaderRow = true, string[]? propertiesToExclude = null)
         {
-            Type type = typeof(T);
-            TypeAccessor typeAccessor = TypeAccessor.Create(type);
-            PropertyInfo[] properties = typeAccessor.GetHierarchicalOrderedPropertyList(type, propertiesToExclude);
+            PropertyInfo[] properties = typeof(T).GetHierarchicalOrderedPropertyList(propertiesToExclude);
 
             List<ExcelCell[]> cellMatrix = [];
 

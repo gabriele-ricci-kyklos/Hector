@@ -75,7 +75,7 @@ namespace Hector.Excel
             TypeAccessor typeAccessor = TypeAccessor.Create(type);
             ObjectConstructor typeConstructorDelegate = ObjectActivator.CreateILConstructorDelegate(type);
 
-            PropertyInfo[] properties = typeAccessor.GetHierarchicalOrderedPropertyList(type);
+            PropertyInfo[] properties = type.GetHierarchicalOrderedPropertyList();
 
             int fieldCount = properties.Length;
             int row = hasHeader ? 1 : 0;
