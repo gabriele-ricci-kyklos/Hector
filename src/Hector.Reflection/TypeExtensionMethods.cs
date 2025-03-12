@@ -42,11 +42,7 @@ namespace Hector.Reflection
             return false;
         }
 
-        public static bool IsNumericType(this Type? type)
-        {
-            TypeCode typeCode = Type.GetTypeCode(type);
-            return ((uint)(typeCode - 4) <= 11u);
-        }
+        public static bool IsNumericType(this Type? type) => (uint)(Type.GetTypeCode(type) - 4) <= 11u;
 
         public static bool IsTupleType(this Type type)
         {
