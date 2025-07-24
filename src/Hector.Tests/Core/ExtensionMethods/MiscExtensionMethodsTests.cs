@@ -19,9 +19,31 @@ namespace Hector.Tests.Core.ExtensionMethods
         {
             const string right = "Network";
             const string wrong = "Networ";
+            const string ignoreCaseRight = "network";
 
             right.ToEnum<DriveType>().Should().NotBeNull();
             wrong.ToEnum<DriveType>().Should().BeNull();
+
+            ignoreCaseRight.ToEnum<DriveType>(true).Should().NotBeNull();
+            ignoreCaseRight.ToEnum<DriveType>().Should().BeNull();
+        }
+
+        [Fact]
+        public void TryParseToEnum()
+        {
+            const string right = "Network";
+            const string wrong = "Networ";
+            const string ignoreCaseRight = "network";
+
+            right.TryParseToEnum(out DriveType d).Should().BeTrue();
+            d.Should().Be(DriveType.Network);
+
+            wrong.TryParseToEnum<DriveType>(out _).Should().BeFalse();
+
+            ignoreCaseRight.TryParseToEnum(out DriveType ddd, true).Should().BeTrue();
+            ddd.Should().Be(DriveType.Network);
+
+            ignoreCaseRight.TryParseToEnum<DriveType>(out _).Should().BeFalse();
         }
     }
 }

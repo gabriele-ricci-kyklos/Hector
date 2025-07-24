@@ -67,16 +67,28 @@ namespace Hector
             return true;
         }
 
-        public static T? ToEnum<T>(this string s, T? failureValue = default)
+        public static T? ToEnum<T>(this string s, bool ignoreCase = false, T? failureValue = default)
             where T : struct
         {
-            if (s.IsNullOrBlankString()
-                || !Enum.TryParse(s, out T result))
+            if (!s.TryParseToEnum(out T result, ignoreCase))
             {
                 return failureValue ?? null;
             }
 
             return result;
+        }
+
+        public static bool TryParseToEnum<T>(this string s, out T value, bool ignoreCase = false)
+            where T : struct
+        {
+            value = default;
+
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return false;
+            }
+
+            return Enum.TryParse(s, ignoreCase, out value);
         }
     }
 }
