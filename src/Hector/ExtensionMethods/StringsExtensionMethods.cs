@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Hector
 {
@@ -96,6 +99,14 @@ namespace Hector
                 TypeCode.UInt64 => ulong.TryParse(s, numberStyles, formatProvider, out ulong value) ? value.ConvertTo(type) : null,
                 _ => null
             };
+        }
+
+        public static async Task WriteStreamAsync(this string str, Stream stream, Encoding? encoding = null, int bufferSize = 4096)
+        {
+            using StreamWriter writer = new(stream, encoding ?? Encoding.UTF8, bufferSize, true);
+            await writer.WriteAsync(str).ConfigureAwait(false);
+            await writer.FlushAsync().ConfigureAwait(false);
+            stream.Position = 0;
         }
     }
 }

@@ -98,5 +98,14 @@ namespace Hector.Tests.Core.ExtensionMethods
         {
             input.ToNumber(type, formatProvider).Should().Be(expected);
         }
+
+        [Fact]
+        public async Task TestWriteStreamAsync()
+        {
+            string s = "hector is cool";
+            using MemoryStream ms = new();
+            await s.WriteStreamAsync(ms);
+            ms.Length.Should().BeGreaterThan(0);
+        }
     }
 }
