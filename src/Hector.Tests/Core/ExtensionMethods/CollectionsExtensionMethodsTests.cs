@@ -273,5 +273,17 @@ namespace Hector.Tests.Core.ExtensionMethods
             res[1].Should().Be(1);
             res[2].Should().Be(2);
         }
+
+        [Fact]
+        public void TestAddRange()
+        {
+            HashSet<int> set = [];
+            int[] items = [1, 2, 3];
+            set.AddRange(items);
+
+            set.Should()
+                .NotBeEmpty()
+                .And.ContainInOrder(items);
+        }
     }
 }

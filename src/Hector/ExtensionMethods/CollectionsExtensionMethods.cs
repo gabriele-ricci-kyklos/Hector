@@ -124,5 +124,13 @@ namespace Hector
             Array.Copy(data, index, result, 0, length);
             return result;
         }
+
+        public static void AddRange<T>(this ISet<T> set, IEnumerable<T> values)
+        {
+            foreach (T item in values)
+            {
+                set.Add(item);
+            }
+        }
     }
 }
