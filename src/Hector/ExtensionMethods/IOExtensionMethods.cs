@@ -7,7 +7,7 @@ namespace Hector
     public static class IOExtensionMethods
     {
         public static string CombinePaths(this string s, params string[] otherPaths) =>
-            Path.Combine(s.AsArray().Union(otherPaths.ToEmptyIfNull().Where(x => x.IsNotNullAndNotBlank())).ToArray());
+            Path.Combine(s.AsArray().Concat(otherPaths.ToEmptyIfNull().Where(x => x.IsNotNullAndNotBlank())).ToArray());
 
         public static bool IsUncPath(this string path)
         {

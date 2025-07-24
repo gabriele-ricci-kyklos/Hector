@@ -29,7 +29,7 @@ namespace Hector.Tests.Core.ExtensionMethods
         }
 
         [Fact]
-        public void TryParseToEnum()
+        public void TestTryParseToEnum()
         {
             const string right = "Network";
             const string wrong = "Networ";
