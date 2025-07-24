@@ -4,6 +4,8 @@ using Hector;
 using Hector.Reflection;
 using System.Data;
 using System.Diagnostics;
+using System.Reflection;
+using System.Text.Json.Serialization;
 
 namespace Hector.Tests.Reflection
 {
@@ -209,7 +211,26 @@ namespace Hector.Tests.Reflection
         [Fact]
         public void TestHasAttribute()
         {
-            typeof(Entity).HasAttribute<SerializableAttribute>().Should().BeTrue();
+            typeof(Entity).HasAttribute<InheritAttribute>().Should().BeTrue();
+            typeof(Entity).HasAttribute<ObsoleteAttribute>().Should().BeFalse();
+            typeof(Entity5).HasAttribute<InheritAttribute>(true).Should().BeTrue();
+            typeof(Entity5).HasAttribute<InheritAttribute>().Should().BeFalse();
+
+            PropertyInfo pInfo = typeof(Entity5).GetProperties().First(x => x.Name == nameof(Entity5.Prop));
+            pInfo.HasAttribute<JsonIgnoreAttribute>().Should().BeTrue();
+        }
+
+        [Fact]
+        public void TestHasPropertyAttribute()
+        {
+            typeof(Entity5).HasPropertyAttribute<JsonIgnoreAttribute>().Should().BeTrue();
+        }
+
+        [Fact]
+        public void TestGetAttributeOfType()
+        {
+            PropertyInfo pInfo = typeof(Entity5).GetProperties().First(x => x.Name == nameof(Entity5.Prop));
+            pInfo.GetAttributeOfType<JsonIgnoreAttribute>().Should().NotBeNull();
         }
 
         [Fact]
@@ -332,7 +353,7 @@ namespace Hector.Tests.Reflection
         }
     }
 
-    [Serializable]
+    [Inherit]
     public class Entity
     {
         [Ordinal(2)]
@@ -389,5 +410,16 @@ namespace Hector.Tests.Reflection
             Diagnosis = diagnosis;
             Date = date;
         }
+    }
+
+    public class Entity5 : Entity
+    {
+        [JsonIgnore]
+        public bool Prop {  get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
+    public class InheritAttribute : Attribute
+    {
     }
 }

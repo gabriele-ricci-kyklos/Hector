@@ -103,27 +103,31 @@ namespace Hector.Reflection
             return propertyValues;
         }
 
-        public static bool HasAttribute<TAttrib>(this Type type) where TAttrib : Attribute =>
-            HasAttribute(type, typeof(TAttrib));
+        public static bool HasAttribute<TAttrib>(this Type type, bool inherit = false) where TAttrib : Attribute =>
+            HasAttribute(type, typeof(TAttrib), inherit);
 
-        public static bool HasAttribute(this Type type, Type attributeType) =>
-            type.IsDefined(attributeType, true);
+        public static bool HasAttribute(this Type type, Type attributeType, bool inherit = false) =>
+            type.IsDefined(attributeType, inherit);
 
-        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type)
-            where TAttrib : Attribute =>
-            type.GetAttributeOfType<TAttrib>(inherit: false);
+        public static bool HasPropertyAttribute<TAttrib>(this Type type) =>
+            type.HasPropertyAttribute(typeof(TAttrib));
 
-        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type, bool inherit)
+        public static bool HasPropertyAttribute(this Type type, Type attributeType) =>
+            type.GetProperties()
+                .Any(prop => prop.IsDefined(attributeType, false));
+
+        public static TAttrib? GetAttributeOfType<TAttrib>(this Type type, bool inherit = false)
             where TAttrib : Attribute =>
             type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().FirstOrDefault();
 
-        public static TAttrib? GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit)
+        public static TAttrib? GetAttributeOfType<TAttrib>(this PropertyInfo propertyInfo, bool inherit = false)
             where TAttrib : Attribute =>
             GetAttributeOfTypeImpl<TAttrib>(propertyInfo, inherit);
 
-        public static bool HasAttribute<TAttrib>(this PropertyInfo propertyInfo, bool inherit) where TAttrib : Attribute => propertyInfo.GetAttributeOfType<TAttrib>(inherit) is not null;
+        public static bool HasAttribute<TAttrib>(this PropertyInfo propertyInfo, bool inherit = false) where TAttrib : Attribute =>
+            propertyInfo.GetAttributeOfType<TAttrib>(inherit) is not null;
 
-        public static TAttrib? GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit)
+        public static TAttrib? GetAttributeOfType<TAttrib>(this FieldInfo fieldInfo, bool inherit = false)
             where TAttrib : Attribute =>
             GetAttributeOfTypeImpl<TAttrib>(fieldInfo, inherit);
 
@@ -131,11 +135,7 @@ namespace Hector.Reflection
             where TAttrib : Attribute =>
             memberInfo.GetCustomAttributes(inherit).OfType<TAttrib>().FirstOrDefault();
 
-        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type)
-            where TAttrib : Attribute =>
-            type.GetAllAttributesOfType<TAttrib>(inherit: false);
-
-        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type, bool inherit)
+        public static TAttrib[] GetAllAttributesOfType<TAttrib>(this Type type, bool inherit = false)
             where TAttrib : Attribute =>
             type.GetCustomAttributes(typeof(TAttrib), inherit).OfType<TAttrib>().ToArray();
 
