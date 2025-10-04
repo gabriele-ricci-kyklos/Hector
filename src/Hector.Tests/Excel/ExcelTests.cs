@@ -9,8 +9,7 @@ namespace Hector.Tests.Excel
     {
         const string _filePath = @"C:\temp\hector_excel.xlsx";
 
-        [Fact]
-        public async Task TestExcelFileCreationWithRemiraStyle()
+        private async Task WriteExcelFile(bool withHeader)
         {
             ExcelDTO[] data = [
                 new ExcelDTO(DateTime.Now, 1, "one", "1"),
@@ -54,12 +53,18 @@ namespace Hector.Tests.Excel
                 File.Delete(_filePath);
             }
 
-            using FileStream stream = new(_filePath, FileMode.CreateNew);
-            await excelCreator.CreateExcelFileAsync("Report", data, stream, true, nameof(ExcelDTO.Code2).AsArray());
+            using FileStream stream = File.OpenWrite(_filePath);
+            await excelCreator.CreateExcelFileAsync("Report", data, stream, propertiesToExclude: nameof(ExcelDTO.Code2).AsArray());
+
+            File.Exists(_filePath).Should().BeTrue();
         }
 
         [Fact]
-        public void ReadExcel()
+        public Task TestExcelFileCreationWithRemiraStyle() =>
+            WriteExcelFile(true);
+
+        [Fact]
+        public void TestExcelFileRead()
         {
             ExcelDTO[] items = ExcelReader.GetExcelWorksheet<ExcelDTO>(_filePath);
             items.Should().NotBeNullOrEmpty();
@@ -67,8 +72,16 @@ namespace Hector.Tests.Excel
     }
 
 #nullable disable
-    public record ExcelDTO(DateTime Date, int Id, string Code, string Code2)
+    public class ExcelDTO(DateTime date, int id, string code, string code2)
     {
+        [ExcelField(1)]
+        public DateTime Date { get; set; } = date;
+        [ExcelField(2)]
+        public int Id { get; set; } = id;
+        [ExcelField(3)]
+        public string Code { get; set; } = code;
+        public string Code2 { get; set; } = code2;
+
         public ExcelDTO() : this(default, default, null, null)
         {
         }
