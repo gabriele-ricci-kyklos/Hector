@@ -5,19 +5,19 @@ namespace Hector
 {
     internal static class NetCoreExtensionMethods
     {
-        internal static TValue? NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
+        internal static TValue? GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
         {
 #if NET5_0_OR_GREATER
-            return dictionary.GetValueOrDefault(key);
+            return CollectionExtensions.GetValueOrDefault(dictionary, key);
 #else
-            return dictionary!.NetCoreGetValueOrDefault(key, default);
+            return dictionary!.GetValueOrDefault(key, default);
 #endif
         }
 
-        internal static TValue NetCoreGetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+        internal static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
         {
 #if NET5_0_OR_GREATER
-            return dictionary.GetValueOrDefault(key, defaultValue);
+            return CollectionExtensions.GetValueOrDefault(dictionary, key, defaultValue);
 #else
             if (dictionary?.TryGetValue(key, out TValue value) ?? false)
             {
@@ -28,10 +28,10 @@ namespace Hector
 #endif
         }
 
-        internal static bool NetCoreTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        internal static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {
 #if NET5_0_OR_GREATER
-            return dictionary.TryAdd(key, value);
+            return CollectionExtensions.TryAdd(dictionary, key, value);
 #else
             if (dictionary is null)
             {

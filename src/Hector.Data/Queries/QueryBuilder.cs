@@ -193,7 +193,7 @@ namespace Hector.Data.Queries
                     .Select(x => x.Trim())
                     .ToArray();
 
-            string? funcStr = _sqlFuncMapping.NetCoreGetValueOrDefault(funcName);
+            string? funcStr = _sqlFuncMapping.GetValueOrDefault(funcName);
             if (funcStr.IsNullOrBlankString())
             {
                 funcStr = funcName;

@@ -174,7 +174,7 @@ where t.is_table_type = 1";
 
                 TableTypeDetailModel model = new
                 (
-                    DbItemType: mappingTableToTypeDict.NetCoreGetValueOrDefault(tableName)!,
+                    DbItemType: mappingTableToTypeDict.GetValueOrDefault(tableName)!,
                     TableTypeName: tableName,
                     ColumnName: e.ColumnName,
                     ColumnType: columnType,

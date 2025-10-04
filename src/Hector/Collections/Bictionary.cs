@@ -15,7 +15,7 @@ namespace Hector.Collections
         {
         }
 
-        public TValue? GetForwardValueOrDefault(TKey key, TValue defaultValue = default!) => _forward.NetCoreGetValueOrDefault(key, defaultValue);
-        public TKey? GetReverseValueOrDefault(TValue key, TKey defaultValue = default!) => _reverse.NetCoreGetValueOrDefault(key, defaultValue);
+        public TValue? GetForwardValueOrDefault(TKey key, TValue defaultValue = default!) => _forward.GetValueOrDefault(key, defaultValue);
+        public TKey? GetReverseValueOrDefault(TValue key, TKey defaultValue = default!) => _reverse.GetValueOrDefault(key, defaultValue);
     }
 }

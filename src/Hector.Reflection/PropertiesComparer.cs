@@ -26,12 +26,12 @@ namespace Hector.Reflection
             {
                 Member? TMember =
                     TmemberDict
-                        .NetCoreGetValueOrDefault(property)
+                        .GetValueOrDefault(property)
                         .GetNonNullOrThrow();
 
                 Member? RMember =
                     RmemberDict
-                        .NetCoreGetValueOrDefault(property)
+                        .GetValueOrDefault(property)
                         .GetNonNullOrThrow();
 
                 Type tMemberType = useUnderlyingTypeForNullables ? Nullable.GetUnderlyingType(TMember.Type) ?? TMember.Type : TMember.Type;
