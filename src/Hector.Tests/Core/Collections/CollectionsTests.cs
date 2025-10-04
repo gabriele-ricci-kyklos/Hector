@@ -81,6 +81,34 @@ namespace Hector.Tests.Core.Collections
             data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Diagnosis)).Should().HaveCount(2);
             data.Distinct(FuncEqualityComparer<Entity>.ByProperty(x => x.Date)).Should().ContainSingle();
         }
+
+        [Fact]
+        public async Task TestAsyncRefillEnumerator()
+        {
+            static Task<long[]> getDataAsync(int n)
+            {
+                int[] data = Enumerable.Range(1, n).ToArray();
+                return data.Select(x => (long)x).ToArray().AsResultTask();
+            }
+
+            AsyncRefillEnumerator<long> enumerator = new(x => getDataAsync(x), 10);
+
+            List<Task<long>> tasks = [];
+            for (int i = 0; i < 30; i++)
+            {
+                tasks.Add(enumerator.GetNextValueAsync());
+            }
+
+            await Task.WhenAll(tasks);
+
+            var grouped = tasks.Select(x => x.Result).GroupBy(n => n);
+
+            grouped.Should().HaveCount(10, because: "there should be 10 distinct numbers");
+            grouped.Should().OnlyContain(g => g.Key >= 1 && g.Key <= 10,
+                                        because: "all numbers should be between 1 and 10");
+            grouped.Should().OnlyContain(g => g.Count() == 3,
+                                        because: "each number should appear exactly 3 times");
+        }
     }
 
     public class Entity
