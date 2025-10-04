@@ -36,7 +36,7 @@ namespace Hector.Excel
 
             foreach (DataRow row in table.Rows)
             {
-                if (row.ItemArray.IsNullOrEmptyList())
+                if (row.ItemArray.IsNullOrEmpty())
                 {
                     continue;
                 }

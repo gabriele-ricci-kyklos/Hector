@@ -6,7 +6,7 @@ namespace Hector
 {
     public static class CollectionsExtensionMethods
     {
-        public static bool IsNullOrEmptyList<T>(this IEnumerable<T>? list) =>
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T>? list) =>
             list is null || !list.Any();
 
         public static bool IsNotNullAndNotEmptyList<T>(this IEnumerable<T>? list) =>
@@ -16,7 +16,7 @@ namespace Hector
             enumerable ?? [];
 
         public static IEnumerable<T>? ToNullIfEmpty<T>(this IEnumerable<T>? list) =>
-            list.IsNullOrEmptyList() ? null : list.ToEmptyIfNull();
+            list.IsNullOrEmpty() ? null : list.ToEmptyIfNull();
 
         public static List<T> ToEmptyListIfNull<T>(this IEnumerable<T>? enumerable) =>
             enumerable.ToEmptyIfNull().ToList();
@@ -25,19 +25,14 @@ namespace Hector
             enumerable?.ToArray() ?? [];
 
         public static T[]? ToNullIfEmptyArray<T>(this IEnumerable<T>? list) =>
-            list.IsNullOrEmptyList() ? null : list.ToEmptyArrayIfNull();
+            list.IsNullOrEmpty() ? null : list.ToEmptyArrayIfNull();
 
         public static List<T>? ToNullIfEmptyList<T>(this IEnumerable<T>? list) =>
-            list.IsNullOrEmptyList() ? null : list.ToEmptyListIfNull();
+            list.IsNullOrEmpty() ? null : list.ToEmptyListIfNull();
 
         public static void ForEach<T>(this IEnumerable<T> sequence, Action<T> action)
         {
-            if (sequence.IsNullOrEmptyList())
-            {
-                return;
-            }
-
-            foreach (T item in sequence)
+            foreach (T item in sequence.ToEmptyIfNull())
             {
                 action(item);
             }
@@ -45,16 +40,10 @@ namespace Hector
 
         public static void ForEach<T>(this IEnumerable<T> sequence, Action<T, int> action)
         {
-            if (sequence.IsNullOrEmptyList())
-            {
-                return;
-            }
-
             int index = 0;
-            foreach (T item in sequence)
+            foreach (T item in sequence.ToEmptyIfNull())
             {
-                action(item, index);
-                ++index;
+                action(item, index++);
             }
         }
 

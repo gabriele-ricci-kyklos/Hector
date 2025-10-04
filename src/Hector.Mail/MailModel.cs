@@ -83,12 +83,12 @@ namespace Hector.Mail
             mailMessage.Body = mailBody;
             mailMessage.To.Add(ToAddressList.StringJoin(","));
 
-            if (!CCAddressList.IsNullOrEmptyList())
+            if (!CCAddressList.IsNullOrEmpty())
             {
                 mailMessage.CC.Add(CCAddressList!.StringJoin(","));
             }
 
-            if (!BCCAddressList.IsNullOrEmptyList())
+            if (!BCCAddressList.IsNullOrEmpty())
             {
                 mailMessage.Bcc.Add(BCCAddressList!.StringJoin(","));
             }

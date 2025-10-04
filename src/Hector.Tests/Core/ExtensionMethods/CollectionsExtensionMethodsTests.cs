@@ -20,7 +20,7 @@ namespace Hector.Tests.Core.ExtensionMethods
 
         public void TestIsNullOrEmptyList(int[]? arr)
         {
-            bool outcome = arr.IsNullOrEmptyList();
+            bool outcome = arr.IsNullOrEmpty();
             outcome.Should().Be(arr is null);
         }
 
