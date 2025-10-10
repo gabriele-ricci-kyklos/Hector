@@ -108,5 +108,13 @@ namespace Hector
             await writer.FlushAsync().ConfigureAwait(false);
             stream.Position = 0;
         }
+
+#if NET5_0_OR_GREATER
+#else
+        public static bool Contains(this string source, string toCheck, StringComparison comp) => source?.IndexOf(toCheck, comp) >= 0;
+
+#endif
+
+        public static bool ContainsIgnoreCase(this string s, string token) => s.Contains(token, StringComparison.OrdinalIgnoreCase);
     }
 }

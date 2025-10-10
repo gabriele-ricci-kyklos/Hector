@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using System.Globalization;
 
 namespace Hector.Tests.Core.ExtensionMethods
 {
@@ -102,10 +101,17 @@ namespace Hector.Tests.Core.ExtensionMethods
         [Fact]
         public async Task TestWriteStreamAsync()
         {
-            string s = "hector is cool";
+            const string s = "hector is cool";
             using MemoryStream ms = new();
             await s.WriteStreamAsync(ms);
             ms.Length.Should().BeGreaterThan(0);
+        }
+
+        [Fact]
+        public void ContainsIgnoreCase()
+        {
+            const string s = "hector is cool";
+            s.ContainsIgnoreCase("HECTOR").Should().BeTrue();
         }
     }
 }
