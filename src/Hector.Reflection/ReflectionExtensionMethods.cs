@@ -85,6 +85,7 @@ namespace Hector.Reflection
 
         public static Dictionary<string, object?> GetPropertyValues(this object item, PropertyInfo[]? propertyList = null, string[]? propertiesToExclude = null)
         {
+            TypeAccessor typeAccessor = TypeAccessor.Create(item.GetType());
             PropertyInfo[] properties = propertyList.ToNullIfEmptyArray() ?? item.GetType().GetHierarchicalOrderedPropertyList(propertiesToExclude);
             HashSet<string> propertiesToExcludeSet = new(propertiesToExclude.ToEmptyIfNull(), StringComparer.OrdinalIgnoreCase);
             Dictionary<string, object?> propertyValues = [];
@@ -96,7 +97,7 @@ namespace Hector.Reflection
                     continue;
                 }
 
-                object? propertyValue = property.GetValue(item, null);
+                object? propertyValue = typeAccessor[item, property.Name];
                 propertyValues.Add(property.Name, propertyValue);
             }
 
