@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Hector.Threading.Caching
 {
     record Result<TValue>(TValue Value, Exception? Error);
-    record Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, TaskCompletionSource<TValue?> Sender);
+    record Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, TaskCompletionSource<TValue> Sender);
 
     public class CacheFactoryException(string? message, Exception? innerException) : Exception(message, innerException)
     {
@@ -69,7 +69,7 @@ namespace Hector.Threading.Caching
             SlidingExpiration = options.SlidingExpiration;
         }
 
-        public async ValueTask<TValue?> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
+        public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
             if (TryGetValue(key, out TValue? cacheItemValue))
             {
@@ -81,7 +81,7 @@ namespace Hector.Threading.Caching
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
-            TaskCompletionSource<TValue?> self = new();
+            TaskCompletionSource<TValue> self = new();
             CacheChannel<TKey, TValue> channel = GetCacheChannel(key);
             channel.Start();
 
@@ -201,7 +201,6 @@ namespace Hector.Threading.Caching
                     (
                         async msg =>
                         {
-                            TValue? value;
                             if (!TryGetValue(msg.Key, out TValue? cacheItemValue))
                             {
                                 // Check and evict before adding new item
@@ -209,21 +208,17 @@ namespace Hector.Threading.Caching
 
                                 await TryEvictOldestIfNeededAsync().ConfigureAwait(false);
 
-                                value = await factoryTask.ConfigureAwait(false);
+                                cacheItemValue = await factoryTask.ConfigureAwait(false);
 
-                                _cache.TryAdd(msg.Key, CacheItem.Create(value, TimeToLive, SlidingExpiration));
+                                _cache.TryAdd(msg.Key, CacheItem.Create(cacheItemValue, TimeToLive, SlidingExpiration));
 
                                 if (Capacity > 0)
                                 {
                                     _addedItemsQueue.Enqueue(msg.Key);
                                 }
                             }
-                            else
-                            {
-                                value = cacheItemValue;
-                            }
 
-                            return value;
+                            return cacheItemValue!;
                         },
                         _cancellationTokenSource.Token
                     )

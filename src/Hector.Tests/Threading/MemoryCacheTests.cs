@@ -13,7 +13,7 @@ namespace Hector.Tests.Threading
             using MemoryCache<string, string> cache = new(options);
 
             // Act
-            string? value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
+            string value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Assert
             value.Should().Be("value1");
@@ -30,7 +30,7 @@ namespace Hector.Tests.Threading
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Act
-            string? value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value2"));
+            string value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value2"));
 
             // Assert
             value.Should().Be("value1");
@@ -131,6 +131,24 @@ namespace Hector.Tests.Threading
 
             // Assert
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task Item_ShouldExpireAndBeRecreated_WhenTimeToLiveExceeded_AndGetOrCreateIsCalled()
+        {
+            // Arrange
+            MemoryCacheOptions options = new(TimeToLive: TimeSpan.FromMilliseconds(300));
+            using MemoryCache<string, string> cache = new(options);
+            Func<CancellationToken, ValueTask<string>> valueFactory = _ => ValueTask.FromResult("value1");
+            await cache.GetOrCreateAsync("key1", valueFactory);
+
+            // Act
+            await Task.Delay(500);
+            await cache.GetOrCreateAsync("key1", valueFactory);
+            bool result = cache.TryGetValue("key1", out _);
+
+            // Assert
+            result.Should().BeTrue();
         }
 
         [Fact]

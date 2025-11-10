@@ -9,10 +9,10 @@ namespace Hector.Threading.Caching
     {
         private readonly Channel<Message<TKey, TValue>> _channel;
         private readonly Lazy<Task> _consumer;
-        private readonly Func<Message<TKey, TValue>, ValueTask<TValue?>> _factory;
+        private readonly Func<Message<TKey, TValue>, ValueTask<TValue>> _factory;
         private readonly CancellationToken _cancellationToken;
 
-        internal CacheChannel(Func<Message<TKey, TValue>, ValueTask<TValue?>> factory, CancellationToken cancellationToken)
+        internal CacheChannel(Func<Message<TKey, TValue>, ValueTask<TValue>> factory, CancellationToken cancellationToken)
         {
             _factory = factory;
             _cancellationToken = cancellationToken;
@@ -43,7 +43,7 @@ namespace Hector.Threading.Caching
                 {
                     try
                     {
-                        TValue? value = await _factory(msg).ConfigureAwait(false);
+                        TValue value = await _factory(msg).ConfigureAwait(false);
                         msg.Sender.SetResult(value);
                     }
                     catch (Exception ex)
