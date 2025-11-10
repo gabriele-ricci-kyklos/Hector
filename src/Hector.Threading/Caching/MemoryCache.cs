@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Hector.Threading.Caching
 {
     record Result<TValue>(TValue Value, Exception? Error);
-    record Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, TaskCompletionSource<Result<TValue>> Sender);
+    record Message<TKey, TValue>(TKey Key, Func<CancellationToken, ValueTask<TValue>> Factory, TaskCompletionSource<TValue?> Sender);
 
     public class CacheFactoryException(string? message, Exception? innerException) : Exception(message, innerException)
     {
@@ -64,12 +64,12 @@ namespace Hector.Threading.Caching
             TimeToLive = options.TimeToLive ?? TimeSpan.FromMinutes(5);
             EvictionInterval = options.EvictionInterval ?? new TimeSpan(Math.Max(new TimeSpan(TimeToLive.Ticks / 100L * 10).Ticks, TimeSpan.FromMilliseconds(300).Ticks)); // 10%
 
-            _backgroundTask = Task.Run(() => DoBackgroundWorkAsync());
+            _backgroundTask = DoBackgroundWorkAsync();
             ThrowIfCapacityExceeded = options.ThrowIfCapacityExceeded;
             SlidingExpiration = options.SlidingExpiration;
         }
 
-        public async ValueTask<TValue> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
+        public async ValueTask<TValue?> GetOrCreateAsync(TKey key, Func<CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
         {
             if (TryGetValue(key, out TValue? cacheItemValue))
             {
@@ -81,20 +81,21 @@ namespace Hector.Threading.Caching
                 throw new IndexOutOfRangeException("The capacity has been exceeded");
             }
 
-            TaskCompletionSource<Result<TValue>> self = new();
+            TaskCompletionSource<TValue?> self = new();
             CacheChannel<TKey, TValue> channel = GetCacheChannel(key);
             channel.Start();
 
             Message<TKey, TValue> msg = new(key, valueFactory, self);
             await channel.WriteAsync(msg, cancellationToken).ConfigureAwait(false);
 
-            Result<TValue> result = await self.Task.ConfigureAwait(false);
-            if (result.Error is not null)
+            try
             {
-                throw new CacheFactoryException("An error occurred in creating the value", result.Error);
+                return await self.Task.ConfigureAwait(false);
             }
-
-            return result.Value;
+            catch (Exception ex)
+            {
+                throw new CacheFactoryException("An error occurred in creating the value", ex);
+            }
         }
 
         public bool TryGetValue(TKey key, out TValue? value)

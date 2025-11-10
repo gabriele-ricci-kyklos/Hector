@@ -13,7 +13,7 @@ namespace Hector.Tests.Threading
             using MemoryCache<string, string> cache = new(options);
 
             // Act
-            string value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
+            string? value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Assert
             value.Should().Be("value1");
@@ -30,7 +30,7 @@ namespace Hector.Tests.Threading
             await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value1"));
 
             // Act
-            string value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value2"));
+            string? value = await cache.GetOrCreateAsync("key1", _ => ValueTask.FromResult("value2"));
 
             // Assert
             value.Should().Be("value1");

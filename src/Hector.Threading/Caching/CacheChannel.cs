@@ -37,25 +37,18 @@ namespace Hector.Threading.Caching
 
         private async Task ConsumeAsync(CancellationToken cancellationToken)
         {
-            bool isBounded = _channel.Reader.GetType().Name == "BoundedChannelReader";
-
             while (!cancellationToken.IsCancellationRequested && await _channel.Reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 while (_channel.Reader.TryRead(out Message<TKey, TValue>? msg))
                 {
-                    TValue? value = default;
-                    Exception? error = null;
                     try
                     {
-                        value = await _factory(msg).ConfigureAwait(false);
+                        TValue? value = await _factory(msg).ConfigureAwait(false);
+                        msg.Sender.SetResult(value);
                     }
                     catch (Exception ex)
                     {
-                        error = ex;
-                    }
-                    finally
-                    {
-                        msg.Sender.SetResult(new Result<TValue>(value!, error));
+                        msg.Sender.SetException(ex);
                     }
                 }
             }
